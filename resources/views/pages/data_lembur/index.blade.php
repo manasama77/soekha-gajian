@@ -44,12 +44,12 @@
                             <div class="flex gap-3">
                                 @if (auth()->user()->hasRole('admin'))
                                     <div>
-                                        <select id="karyawan_id" name="karyawan_id"
+                                        <select id="user_id" name="user_id"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 min-w-48">
-                                            <option @selected($karyawan_id == null) value="">Semua Karyawan</option>
-                                            @foreach ($karyawans as $karyawan)
-                                                <option @selected($karyawan_id == $karyawan->id) value="{{ $karyawan->id }}">
-                                                    {{ $karyawan->name }}
+                                            <option @selected($user_id == null) value="">Semua Karyawan</option>
+                                            @foreach ($users as $user)
+                                                <option @selected($user_id == $user->id) value="{{ $user->id }}">
+                                                    {{ $user->name }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -139,7 +139,7 @@
                                         class="dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 bg-white border-b">
                                         @if (auth()->user()->hasRole('admin'))
                                             <td class="px-6 py-4">
-                                                {{ $data_lembur->karyawan->name }}
+                                                {{ $data_lembur->user->name }}
                                             </td>
                                         @endif
                                         <td class="px-6 py-4">

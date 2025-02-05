@@ -44,20 +44,19 @@
 
                     @if (auth()->user()->hasRole('admin'))
                         <div class="mb-4">
-                            <label for="karyawan_id"
-                                class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
+                            <label for="user_id" class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
                                 Karyawan
                             </label>
-                            <select id="karyawan_id" name="karyawan_id"
+                            <select id="user_id" name="user_id"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 required>
-                                @foreach ($karyawans as $karyawan)
-                                    <option @selected(old('karyawan_id') == $karyawan->id) value="{{ $karyawan->id }}">
-                                        {{ $karyawan->name }}
+                                @foreach ($users as $user)
+                                    <option @selected(old('user_id') == $user->id) value="{{ $user->id }}">
+                                        {{ $user->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('karyawan_id')
+                            @error('user_id')
                                 <p class="text-xs italic text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
@@ -76,7 +75,7 @@
                                 </svg>
                             </div>
                             <input datepicker datepicker-format="dd-mm-yyyy" id="overtime_in_date"
-                                name="overtime_in_date" value="{{ old('overtime_in_date') }}" type="text"
+                                name="overtime_in_date" type="text"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="Select date" required autocomplete="off" inputmode="none" />
                         </div>
@@ -100,7 +99,6 @@
                                 </svg>
                             </div>
                             <input type="time" id="overtime_in_time" name="overtime_in_time"
-                                value="{{ old('overtime_in_time') }}"
                                 class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 min="18:00" max="23:59" required />
                         </div>
@@ -123,7 +121,7 @@
                                 </svg>
                             </div>
                             <input datepicker datepicker-format="dd-mm-yyyy" id="overtime_out_date"
-                                name="overtime_out_date" value="{{ old('overtime_out_date') }}" type="text"
+                                name="overtime_out_date" type="text"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="Select date" required autocomplete="off" inputmode="none" />
                         </div>
@@ -147,7 +145,6 @@
                                 </svg>
                             </div>
                             <input type="time" id="overtime_out_time" name="overtime_out_time"
-                                value="{{ old('overtime_out_time') }}"
                                 class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 max="23:59" required />
                         </div>

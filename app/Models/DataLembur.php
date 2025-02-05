@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property int $user_id
@@ -45,6 +45,7 @@ class DataLembur extends Model
         'overtime_out',
         'jam_lembur',
         'menit_lembur',
+        'counter_lembur',
         'is_approved',
         'approved_by',
         'approved_at',

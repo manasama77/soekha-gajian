@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Models\User;
 use App\Models\Karyawan;
 use App\Models\DataLembur;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class DataLemburController extends Controller
      */
     public function index(Request $request)
     {
-        $karyawan_id   = $request->karyawan_id ?? null;
+        $user_id       = $request->user_id ?? null;
         $bulan         = $request->bulan ?? null;
         $tahun         = $request->tahun ?? null;
         $lembur_status = $request->lembur_status ?? 'all';
@@ -28,11 +29,11 @@ class DataLemburController extends Controller
         $data_lemburs = DataLembur::query();
 
         if (Auth::user()->hasRole('karyawan')) {
-            $data_lemburs->where('karyawan_id', Auth::user()->karyawan->id);
+            $data_lemburs->where('user_id', Auth::user()->id);
         }
 
-        if ($request->has('karyawan_id') && $request->karyawan_id != null) {
-            $data_lemburs->where('karyawan_id', $karyawan_id);
+        if ($request->has('user_id') && $request->user_id != null) {
+            $data_lemburs->where('user_id', $user_id);
         }
 
         if ($request->has('bulan') && $request->bulan != null) {
@@ -53,14 +54,14 @@ class DataLemburController extends Controller
 
         $data_lemburs = $data_lemburs->orderBy('overtime_in', 'desc')->paginate(10)->withQueryString();
 
-        $karyawans = Karyawan::where('is_active', 1)->get();
-        $bulans    = $this->list_month();
-        $tahuns    = $this->list_year();
+        $users  = User::where('generate_slip_gaji', true)->get();
+        $bulans = $this->list_month();
+        $tahuns = $this->list_year();
 
         $data = [
             'data_lemburs'  => $data_lemburs,
-            'karyawans'     => $karyawans,
-            'karyawan_id'   => $karyawan_id,
+            'users'         => $users,
+            'user_id'       => $user_id,
             'bulans'        => $bulans,
             'bulan'         => $bulan,
             'tahuns'        => $tahuns,
@@ -77,25 +78,17 @@ class DataLemburController extends Controller
     public function create()
     {
         $periode_cutoffs = PeriodeCutoff::active()->latest()->get();
-        $karyawans       = Karyawan::query();
+        $users       = User::query();
 
         if (Auth::user()->hasRole('karyawan')) {
-            $karyawans->where('id', Auth::user()->karyawan->id);
+            $users->where('id', Auth::user()->id);
         }
 
-        $karyawans = $karyawans->get();
-
-        $min_date = $periode_cutoffs->first()->lembur_start->format('d-m-Y');
-        $max_date = $periode_cutoffs->first()->lembur_end->format('d-m-Y');
-
-        $min_time = '18:00:00';
+        $users = $users->get();
 
         $data = [
             'periode_cutoffs' => $periode_cutoffs,
-            'karyawans'       => $karyawans,
-            'min_date'        => $min_date,
-            'max_date'        => $max_date,
-            'min_time'        => $min_time,
+            'users'           => $users,
         ];
 
         return view('pages.data_lembur.create', $data);
@@ -111,12 +104,12 @@ class DataLemburController extends Controller
 
             if (Auth::user()->hasRole('karyawan')) {
                 $request->merge([
-                    'karyawan_id' => Auth::user()->karyawan->id,
+                    'user_id' => Auth::user()->id,
                 ]);
             }
 
             $request->validate([
-                'karyawan_id'       => ['required', 'exists:karyawans,id'],
+                'user_id'           => ['required', 'exists:users,id'],
                 'overtime_in_date'  => ['required', 'date'],
                 'overtime_in_time'  => ['required', 'date_format:H:i'],
                 'overtime_out_date' => ['required', 'date', 'after_or_equal:overtime_in_date'],
@@ -128,7 +121,7 @@ class DataLemburController extends Controller
             $overtime_in       = Carbon::parse($overtime_in_date);
             $overtime_out      = Carbon::parse($overtime_out_date);
 
-            $check = DataLembur::where(column: 'karyawan_id', operator: $request->karyawan_id)
+            $check = DataLembur::where(column: 'user_id', operator: $request->user_id)
                 ->whereDate('overtime_in', $overtime_in->toDateString())
                 ->where(function ($query) {
                     $query->whereNull('is_approved')
@@ -141,18 +134,20 @@ class DataLemburController extends Controller
                 return redirect()->route('data-lembur.index')->with('success', 'Data lembur berhasil disimpan.');
             }
 
-            $jam_lembur   = ceil(num: $overtime_in->diffInMinutes(date: $overtime_out) / 60);
-            $menit_lembur = ceil($overtime_in->diffInMinutes(date: $overtime_out));
+            $jam_lembur     = ceil(num: $overtime_in->diffInMinutes(date: $overtime_out) / 60);
+            $menit_lembur   = ceil($overtime_in->diffInMinutes(date: $overtime_out));
+            $counter_lembur = ceil($menit_lembur / 30);
 
             DataLembur::createOrFirst([
-                'karyawan_id'  => $request->karyawan_id,
-                'overtime_in'  => $overtime_in->toDateTimeString(),
-                'overtime_out' => $overtime_out->toDateTimeString(),
-                'jam_lembur'   => $jam_lembur,
-                'menit_lembur' => $menit_lembur,
-                'is_approved'  => null,
-                'approved_by'  => null,
-                'approved_at'  => null,
+                'user_id'        => $request->user_id,
+                'overtime_in'    => $overtime_in->toDateTimeString(),
+                'overtime_out'   => $overtime_out->toDateTimeString(),
+                'jam_lembur'     => $jam_lembur,
+                'menit_lembur'   => $menit_lembur,
+                'counter_lembur' => $counter_lembur,
+                'is_approved'    => null,
+                'approved_by'    => null,
+                'approved_at'    => null,
             ]);
 
             DB::commit();
