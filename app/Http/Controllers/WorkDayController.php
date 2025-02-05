@@ -24,6 +24,7 @@ class WorkDayController extends Controller
             ->selectRaw('COUNT(CASE WHEN is_off_day = true THEN 1 END) as total_hari_tidak_kerja')
             ->with(['user', 'periode_cutoff'])
             ->groupBy('user_id', 'periode_cutoff_id')
+            ->orderBy('periode_cutoff_id', 'desc')
             ->paginate(10);
 
         $data = [

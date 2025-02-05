@@ -28,11 +28,15 @@
                 <div class="relative px-4 py-3 mt-4 text-red-700 bg-red-100 border border-red-400 rounded"
                     role="alert">
                     <strong class="font-bold">Error!</strong>
-                    <ul class="mt-3 text-sm text-red-600 list-disc list-inside">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                    @if ($errors->count() > 1)
+                        <ul class="mt-3 text-sm text-red-600 list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <span class="sm:inline block">{{ $errors->first() }}</span>
+                    @endif
                 </div>
             @endif
 
@@ -60,6 +64,9 @@
                                         Terlambat
                                     </th>
                                     <th scope="col" class="px-6 py-3">
+                                        Alasan
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
                                         Status
                                     </th>
                                     @if (auth()->user()->hasRole('admin'))
@@ -83,7 +90,7 @@
                                     <tr
                                         class="dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 bg-white border-b">
                                         <td class="px-6 py-4">
-                                            {{ $request_kehadiran->karyawan->name }}
+                                            {{ $request_kehadiran->user->name }}
                                         </td>
                                         <td class="px-6 py-4">
                                             {{ $request_kehadiran->tanggal->format('d M Y') }}
@@ -96,6 +103,9 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             {{ $request_kehadiran->menit_terlambat }} Menit
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            {{ $request_kehadiran->alasan }}
                                         </td>
                                         <td class="px-6 py-4">
                                             @if ($request_kehadiran->is_approved === null)
@@ -159,7 +169,7 @@
             function changeStatus(id, tipe) {
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
-                    text: `Anda akan ${tipe} data lembur ini!`,
+                    text: `Anda akan ${tipe} data request kehadiran ini!`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',

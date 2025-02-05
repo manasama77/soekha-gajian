@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="dark:text-gray-200 text-xl font-semibold leading-tight text-gray-800">
-                {{ __('Data Kehadiran') }}
+                {{ __('Data Presensi') }}
             </h2>
 
             <div class="">
@@ -99,11 +99,14 @@
                                     <th scope="col" class="px-6 py-3">
                                         Tanggal
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-center">
-                                        Clock In
+                                    <th scope="col" class="px-6 py-3">
+                                        Shift
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-center">
-                                        Clock Out
+                                        Kehadiran
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-center">
+                                        Pulang
                                     </th>
                                     <th scope="col" class="px-6 py-3">
                                         Terlambat
@@ -130,11 +133,14 @@
                                         class="dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 bg-white border-b">
                                         @if (auth()->user()->hasRole('admin'))
                                             <td class="px-6 py-4">
-                                                {{ $data_kehadiran->karyawan->name }}
+                                                {{ $data_kehadiran->user->name }}
                                             </td>
                                         @endif
                                         <td class="px-6 py-4">
                                             {{ $data_kehadiran->tanggal->format('d M Y') }}
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            {{ $data_kehadiran->shifts->name }}
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex justify-center gap-3">

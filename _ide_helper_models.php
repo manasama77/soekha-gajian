@@ -92,6 +92,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataKehadiran whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataKehadiran whereWorkDayId($value)
  * @mixin \Eloquent
+ * @property int $counter_terlambat
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataKehadiran whereCounterTerlambat($value)
  */
 	class DataKehadiran extends \Eloquent {}
 }
@@ -253,6 +255,10 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereWorkDayId($value)
  * @mixin \Eloquent
+ * @property int $counter_terlambat
+ * @property string $status
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereCounterTerlambat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereStatus($value)
  */
 	class RequestKehadiran extends \Eloquent {}
 }

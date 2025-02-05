@@ -46,11 +46,11 @@ Route::middleware([
         Route::get('karyawan', [KaryawanController::class, 'index'])->name('karyawan.index');
         Route::get('karyawan/create', [KaryawanController::class, 'create'])->name('karyawan.create');
         Route::post('karyawan', [KaryawanController::class, 'store'])->name('karyawan.store');
-        Route::get('karyawan/{karyawan}/edit', [KaryawanController::class, 'edit'])->name('karyawan.edit');
-        Route::put('karyawan/{karyawan}', [KaryawanController::class, 'update'])->name('karyawan.update');
-        Route::delete('karyawan/{karyawan}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');
-        Route::get('karyawan/{karyawan}/reset-password', [KaryawanController::class, 'reset_password'])->name('karyawan.reset-password');
-        Route::patch('karyawan/{karyawan}', [KaryawanController::class, 'reset_password_process'])->name('karyawan.reset-password-process');
+        Route::get('karyawan/{user}/edit', [KaryawanController::class, 'edit'])->name('karyawan.edit');
+        Route::put('karyawan/{user}', [KaryawanController::class, 'update'])->name('karyawan.update');
+        Route::delete('karyawan/{user}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');
+        Route::get('karyawan/{user}/reset-password', [KaryawanController::class, 'reset_password'])->name('karyawan.reset-password');
+        Route::patch('karyawan/{user}', [KaryawanController::class, 'reset_password_process'])->name('karyawan.reset-password-process');
 
         Route::get('/periode-cutoff', [PeriodeCutoffController::class, 'index'])->name('periode-cutoff.index');
         Route::get('/periode-cutoff/create', [PeriodeCutoffController::class, 'create'])->name('periode-cutoff.create');

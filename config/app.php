@@ -124,8 +124,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-    'jam_masuk'          => env('JAM_MASUK', '09:15:00'),
-    'potongan_terlambat' => env('POTONGAN_TERLAMBAT', 15000),
-    'lembur_rate'        => env('LEMBUR_RATE', 20000),
+    'rate_terlambat'      => env('RATE_TERLAMBAT', 6000),
+    'rate_lembur'         => env('LEMBUR_RATE', 5000),
+    'toleransi_terlambat' => env('TOLERANSI_TERLMABAT', 15),
 
 ];

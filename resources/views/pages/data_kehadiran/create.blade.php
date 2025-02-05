@@ -23,11 +23,15 @@
                     <div class="relative px-4 py-3 mt-4 text-red-700 bg-red-100 border border-red-400 rounded"
                         role="alert">
                         <strong class="font-bold">Error!</strong>
-                        <ul class="mt-3 text-sm text-red-600 list-disc list-inside">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
+                        @if ($errors->count() > 1)
+                            <ul class="mt-3 text-sm text-red-600 list-disc list-inside">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <span class="sm:inline block">{{ $errors->first() }}</span>
+                        @endif
                     </div>
                 @endif
 
@@ -43,12 +47,10 @@
                             <select id="periode_cutoff_id" name="periode_cutoff_id"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 required>
-                                @foreach ($periode_cutoffs as $periode_cutoff)
-                                    <option value="{{ $periode_cutoff->id }}">
-                                        {{ $periode_cutoff->start_date->format('d F Y') }} s/d
-                                        {{ $periode_cutoff->end_date->format('d F Y') }}
-                                    </option>
-                                @endforeach
+                                <option value="{{ $periode_cutoff->id }}">
+                                    {{ $periode_cutoff->start_date->format('d F Y') }} s/d
+                                    {{ $periode_cutoff->end_date->format('d F Y') }}
+                                </option>
                             </select>
                             @error('periode_cutoff_id')
                                 <p class="text-xs italic text-red-500">{{ $message }}</p>
@@ -74,7 +76,13 @@
                         </div>
                     @endif
 
-                    <div class="mb-4">
+                    @php
+                        $hidden = null;
+                        if (auth()->user()->hasRole('karyawan')) {
+                            $hidden = 'hidden';
+                        }
+                    @endphp
+                    <div class="mb-4 {{ $hidden }}">
                         <label for="tipe_kehadiran"
                             class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
                             Tipe Kehadiran
@@ -82,8 +90,16 @@
                         <select id="tipe_kehadiran" name="tipe_kehadiran"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             required>
-                            <option value="in">Clock In</option>
-                            <option value="out">Clock Out</option>
+                            @if (auth()->user()->hasRole('karyawan'))
+                                @if ($default_tipe_kehadiran == 'in')
+                                    <option value="in">Clock In</option>
+                                @else
+                                    <option value="out">Clock Out</option>
+                                @endif
+                            @else
+                                <option value="in">Clock In</option>
+                                <option value="out">Clock Out</option>
+                            @endif
                         </select>
                         @error('tipe_kehadiran')
                             <p class="text-xs italic text-red-500">{{ $message }}</p>

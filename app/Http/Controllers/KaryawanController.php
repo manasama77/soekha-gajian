@@ -117,10 +117,10 @@ class KaryawanController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(User $karyawan)
+    public function edit(User $user)
     {
         $departements = Departement::all();
-        return view('pages.karyawan.edit', compact('karyawan', 'departements'));
+        return view('pages.karyawan.edit', compact('user', 'departements'));
     }
 
     /**
@@ -151,7 +151,13 @@ class KaryawanController extends Controller
             $gaji_harian = $request->gaji_harian;
         }
 
-        $user->update([
+        if ($request->is_admin) {
+            $user->assignRole('admin');
+        } else {
+            $user->assignRole('karyawan');
+        }
+
+        $user = $user->update([
             'departement_id' => $request->departement_id,
             'name'           => $request->name,
             'tipe_gaji'      => $request->tipe_gaji,
@@ -162,12 +168,6 @@ class KaryawanController extends Controller
             'sisa_cuti'      => $request->sisa_cuti ?? 0,
             'whatsapp'       => $request->whatsapp,
         ]);
-
-        if ($request->is_admin) {
-            $user->syncRoles('admin');
-        } else {
-            $user->syncRoles('karyawan');
-        }
 
         return redirect()->route('setup.karyawan.index')->with('success', 'Karyawan updated successfully!');
     }

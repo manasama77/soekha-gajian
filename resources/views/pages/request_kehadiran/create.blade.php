@@ -20,14 +20,18 @@
                 class="dark:bg-gray-800 dark:border-gray-700 block max-w-sm p-6 mx-auto bg-white border border-gray-200 rounded-lg shadow">
 
                 @if ($errors->any())
-                    <div class="relative px-4 py-3 mt-4 text-red-700 bg-red-100 border border-red-400 rounded"
+                    <div class="relative px-4 py-3 mt-4 mb-3 text-red-700 bg-red-100 border border-red-400 rounded"
                         role="alert">
                         <strong class="font-bold">Error!</strong>
-                        <ul class="mt-3 text-sm text-red-600 list-disc list-inside">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
+                        @if ($errors->count() > 1)
+                            <ul class="mt-3 text-sm text-red-600 list-disc list-inside">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <span class="sm:inline block">{{ $errors->first() }}</span>
+                        @endif
                     </div>
                 @endif
 
@@ -45,8 +49,8 @@
                                 required>
                                 @foreach ($periode_cutoffs as $periode_cutoff)
                                     <option value="{{ $periode_cutoff->id }}">
-                                        {{ $periode_cutoff->kehadiran_start->format('d F Y') }} s/d
-                                        {{ $periode_cutoff->kehadiran_end->format('d F Y') }}
+                                        {{ $periode_cutoff->start_date->format('d F Y') }} s/d
+                                        {{ $periode_cutoff->end_date->format('d F Y') }}
                                     </option>
                                 @endforeach
                             </select>
@@ -56,20 +60,19 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="karyawan_id"
-                                class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
+                            <label for="user_id" class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
                                 Karyawan
                             </label>
-                            <select id="karyawan_id" name="karyawan_id"
+                            <select id="user_id" name="user_id"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 required>
-                                @foreach ($karyawans as $karyawan)
-                                    <option @selected(old('karyawan_id') == $karyawan->id) value="{{ $karyawan->id }}">
-                                        {{ $karyawan->name }}
+                                @foreach ($users as $user)
+                                    <option @selected(old('user_id') == $user->id) value="{{ $user->id }}">
+                                        {{ $user->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('karyawan_id')
+                            @error('user_id')
                                 <p class="text-xs italic text-red-500">{{ $message }}</p>
                             @enderror
                         </div>

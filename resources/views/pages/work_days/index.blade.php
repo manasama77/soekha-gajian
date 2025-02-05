@@ -35,6 +35,12 @@
             <div class="dark:bg-gray-800 sm:rounded-lg overflow-hidden bg-white shadow-sm">
                 <div class="dark:text-gray-100 p-6 text-gray-900">
 
+                    {{-- <button data-modal-target="default-modal" data-modal-toggle="default-modal"
+                        class="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                        type="button">
+                        Toggle modal
+                    </button> --}}
+
                     <div class="sm:rounded-lg relative overflow-x-auto shadow-md">
                         <table id="tables" class="dark:text-gray-400 w-full text-sm text-left text-gray-500">
                             <thead
@@ -127,9 +133,66 @@
         </div>
     </div>
 
+    @push('modals')
+        <div id="modalEl" tabindex="-1" aria-hidden="true"
+            class="fixed left-0 right-0 top-0 z-50 hidden h-[calc(100%-1rem)] max-h-full w-full overflow-y-auto overflow-x-hidden p-4 md:inset-0">
+            <div class="relative w-full max-w-2xl max-h-full">
+                <!-- Modal content -->
+                <div class="dark:bg-gray-700 relative bg-white rounded-lg shadow-sm">
+                    <!-- Modal header -->
+                    <div class="dark:border-gray-600 flex items-start justify-between p-5 border-b rounded-t">
+                        <h3 class="dark:text-white lg:text-2xl text-xl font-semibold text-gray-900">
+                            Terms of Service
+                        </h3>
+                        <button type="button"
+                            class="ms-auto hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white inline-flex items-center justify-center w-8 h-8 text-sm text-gray-400 bg-transparent rounded-lg">
+                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 14 14">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                            </svg>
+                            <span class="sr-only">Close modal</span>
+                        </button>
+                    </div>
+                    <!-- Modal body -->
+                    <div class="p-6 space-y-6">
+                        <p class="dark:text-gray-400 text-base leading-relaxed text-gray-500">
+                            With less than a month to go before the European Union
+                            enacts new consumer privacy laws for its citizens, companies
+                            around the world are updating their terms of service
+                            agreements to comply.
+                        </p>
+                        <p class="dark:text-gray-400 text-base leading-relaxed text-gray-500">
+                            The European Union’s General Data Protection Regulation
+                            (G.D.P.R.) goes into effect on May 25 and is meant to ensure
+                            a common set of data rights in the European Union. It
+                            requires organizations to notify users as soon as possible
+                            of high-risk data breaches that could personally affect
+                            them.
+                        </p>
+                    </div>
+                    <!-- Modal footer -->
+                    <div
+                        class="rtl:space-x-reverse dark:border-gray-600 flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b">
+                        <button type="button"
+                            class="rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            I accept
+                        </button>
+                        <button type="button"
+                            class="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:z-10 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">
+                            Decline
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endpush
+
 
     @push('scripts')
         <script>
+            let modal;
+
             function askDelete(formId) {
                 Swal.fire({
                     title: 'Apakah Anda Yakin?',

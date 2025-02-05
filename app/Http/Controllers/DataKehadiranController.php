@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusDataKehadiran;
 use Exception;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Shift;
+use App\Models\WorkDay;
 use App\Models\Karyawan;
 use App\Models\HariLibur;
 use Illuminate\Http\Request;
@@ -26,7 +29,7 @@ class DataKehadiranController extends Controller
         $bulan   = $request->bulan ?? null;
         $tahun   = $request->tahun ?? null;
 
-        $data_kehadirans = DataKehadiran::query();
+        $data_kehadirans = DataKehadiran::with('shifts');
 
         if (Auth::user()->hasRole('karyawan')) {
             $data_kehadirans->where('user_id', Auth::user()->id);
@@ -44,12 +47,10 @@ class DataKehadiranController extends Controller
             $data_kehadirans->whereYear('tanggal', $tahun);
         }
 
-        $data_kehadirans = $data_kehadirans
-            ->orderBy('tanggal', 'desc')
+        $data_kehadirans = $data_kehadirans->orderBy('tanggal', 'desc')
             ->orderBy('clock_in', 'desc')
             ->paginate(10)
             ->withQueryString();
-
 
         $users  = User::where('generate_slip_gaji', true)->get();
         $bulans = $this->list_month();
@@ -73,18 +74,41 @@ class DataKehadiranController extends Controller
      */
     public function create()
     {
-        $periode_cutoffs = PeriodeCutoff::active()->latest()->get();
-        $users           = User::query();
+        $periode_cutoff = PeriodeCutoff::orderBy('is_active', 'desc')->first();
+        $users           = User::where('generate_slip_gaji', true)->get();
+        $shifts          = Shift::all();
 
+        $current_d = Carbon::now();
+
+        $default_tipe_kehadiran = 'in';
         if (Auth::user()->hasRole('karyawan')) {
-            $users->where('id', Auth::user()->id);
+            $check_work_day = WorkDay::with('shift')->where('periode_cutoff_id', $periode_cutoff->id)
+                ->where('user_id', Auth::user()->id)
+                ->whereDate('tanggal', $current_d)
+                ->first();
+
+            if (!$check_work_day) {
+                return redirect()->back()->withErrors('Kamu tidak memiliki jadwal hari ini...');
+            }
+
+            if ($check_work_day->is_off_day == true) {
+                return redirect()->back()->withErrors('Hari ini hari libur kamu...');
+            }
+
+            $check_data_kehadiran = DataKehadiran::where('user_id', Auth::user()->id)
+                ->where('tanggal', $current_d->toDateString())
+                ->first();
+
+            if ($check_data_kehadiran) {
+                $default_tipe_kehadiran = 'out';
+            }
         }
 
-        $users = $users->where('generate_slip_gaji', true)->get();
-
         $data = [
-            'periode_cutoffs' => $periode_cutoffs,
-            'users'           => $users,
+            'periode_cutoff'         => $periode_cutoff,
+            'users'                  => $users,
+            'shifts'                 => $shifts,
+            'default_tipe_kehadiran' => $default_tipe_kehadiran,
         ];
 
         return view('pages.data_kehadiran.create', $data);
@@ -112,63 +136,93 @@ class DataKehadiranController extends Controller
                 'foto'              => ['nullable', 'image'],
             ]);
 
-            $check_hari_libur = HariLibur::where('tanggal', Carbon::now()->toDateString())->first();
+            $periode_cutoff = PeriodeCutoff::orderBy('is_active', 'desc')->first();
 
-            if ($check_hari_libur) {
-                throw new Exception('Hari ini adalah hari libur.');
+            $check_work_day = WorkDay::with('shift')->where('periode_cutoff_id', $periode_cutoff->id)
+                ->where('user_id', $request->user_id)
+                ->where('tanggal', Carbon::now()->toDateString())
+                ->first();
+
+            if (!$check_work_day) {
+                throw new Exception('Kamu tidak memiliki jadwal hari ini...');
             }
 
-            $check = DataKehadiran::where('karyawan_id', $request->karyawan_id)
+            $work_day_id = $check_work_day->id;
+            $shift_id    = $check_work_day->shift_id;
+            $is_off_day  = $check_work_day->is_off_day;
+
+            if ($is_off_day == true) {
+                throw new Exception('Hari ini hari libur kamu...');
+            }
+
+            $shift            = Shift::find($shift_id);
+            $shift_start_time = Carbon::parse($shift->start_time);
+            $shift_end_time   = Carbon::parse($shift->end_time);
+
+            $check = DataKehadiran::where('user_id', $request->user_id)
                 ->where('tanggal', Carbon::now()->toDateString())
                 ->first();
 
             if ($request->tipe_kehadiran == 'in') {
                 if ($check) {
-                    return redirect()->route('data-kehadiran.index')->with('success', 'Data kehadiran berhasil disimpan.');
+                    $message = 'Presensi kehadiran berhasil disimpan.';
+                    return redirect()->route('data-kehadiran.index')->with('success', $message);
                 }
             } elseif ($request->tipe_kehadiran == 'out') {
                 if (!$check) {
-                    throw new Exception('Data kehadiran clock in belum ada.');
+                    throw new Exception('Kamu belum melakukan presensi kehadiran hari ini.');
                 }
             }
 
-            // $underscore_name = str_replace(' ', '_', strtolower($request->user()->name));
-            // $path            = $request->file('foto')->store('foto_kehadiran_' . $underscore_name, 'public');
-            // $underscore_name = '#';
-            $path            = '#';
+            $underscore_name = str_replace(' ', '_', strtolower($request->user()->name));
+            $path            = $request->file('foto')->store('foto_kehadiran_' . $underscore_name, 'public');
 
-            // $image_manager = new ImageManager(new Driver());
-            // $image_resize = $image_manager->read(public_path('storage/' . $path));
-            // $image_resize->scale(height: 1000);
-            // $image_resize->save(public_path('storage/' . $path));
+            $image_manager = new ImageManager(new Driver());
+            $image_resize = $image_manager->read(public_path('storage/' . $path));
+            $image_resize->scale(height: 1000);
+            $image_resize->save(public_path('storage/' . $path));
 
             $dt        = Carbon::now();
-            $clock_in  = $dt->toTimeString();
+            $tanggal   = $dt->toDateString();
             $clock_out = $dt->toTimeString();
-            $jam_masuk = Carbon::parse(config('app.jam_masuk'));
 
+            // check menit terlambat
             if ($request->tipe_kehadiran == 'in') {
-                $jam_terlambat   = 0;
-                $menit_terlambat = 0;
+                $clock_in            = $dt->toTimeString();
+                $toleransi_terlambat = config('app.toleransi_terlambat');
+                $jam_toleransi       = (clone $shift_start_time)->addMinutes($toleransi_terlambat);
+                $jam_terlambat       = 0;
+                $menit_terlambat     = 0;
+                $counter_terlambat   = 0;
 
-                if ($dt->gt($jam_masuk)) {
-                    $jam_terlambat   = (int) ceil($jam_masuk->diffInHours($dt));
-                    $menit_terlambat = (int) ceil($jam_masuk->diffInMinutes($dt));
+                if ($dt->lt($jam_toleransi)) {
+                    $status            = StatusDataKehadiran::Present;
+                } elseif ($dt->gt($jam_toleransi)) {
+                    $jam_terlambat = $shift_start_time->diffInHours($dt);
+
+                    // hitung berapa kali 30 menit
+                    $menit_terlambat   = $shift_start_time->diffInMinutes($dt);
+                    $counter_terlambat = ceil($menit_terlambat / 30);
+                    $status            = StatusDataKehadiran::Late;
                 }
 
                 DataKehadiran::createOrFirst([
-                    'karyawan_id'       => $request->karyawan_id,
+                    'user_id'           => $request->user_id,
+                    'work_day_id'       => $work_day_id,
                     'periode_cutoff_id' => $request->periode_cutoff_id,
-                    'tanggal'           => $dt->toDateString(),
+                    'shift_id'          => $shift_id,
+                    'tanggal'           => $tanggal,
                     'clock_in'          => $clock_in,
                     'clock_out'         => null,
                     'jam_terlambat'     => abs($jam_terlambat),
                     'menit_terlambat'   => abs($menit_terlambat),
+                    'counter_terlambat' => $counter_terlambat,
                     'foto_in'           => $path,
                     'foto_out'          => null,
+                    'status'            => $status,
                 ]);
-            } else {
-                $old_data = DataKehadiran::where('karyawan_id', $request->karyawan_id)
+            } elseif ($request->tipe_kehadiran == 'out') {
+                $old_data = DataKehadiran::where('user_id', $request->user_id)
                     ->where('tanggal', $dt->toDateString())
                     ->first();
 
@@ -176,7 +230,7 @@ class DataKehadiranController extends Controller
                     unlink(public_path('storage/' . $old_data->foto_out));
                 }
 
-                DataKehadiran::where('karyawan_id', $request->karyawan_id)
+                DataKehadiran::where('user_id', $request->user_id)
                     ->where('tanggal', $dt->toDateString())
                     ->update([
                         'clock_out' => $clock_out,
@@ -184,11 +238,12 @@ class DataKehadiranController extends Controller
                     ]);
             }
 
+            $message = ($request->tipe_kehadiran == 'in') ? 'Presensi kehadiran berhasil disimpan.' : 'Presensi pulang berhasil disimpan.';
             DB::commit();
-            return redirect()->route('data-kehadiran.index')->with('success', 'Data kehadiran berhasil disimpan.');
+            return redirect()->route('data-kehadiran.index')->with('success', $message);
         } catch (Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors($e->getMessage());
+            return redirect()->back()->withErrors($e->getMessage())->withInput();
         }
     }
 

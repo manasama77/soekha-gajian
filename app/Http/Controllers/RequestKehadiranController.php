@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DataKehadiran;
 use Exception;
+use App\Models\User;
+use App\Models\Shift;
+use App\Models\WorkDay;
 use App\Models\Karyawan;
 use App\Models\HariLibur;
 use Illuminate\Http\Request;
+use App\Models\DataKehadiran;
 use App\Models\PeriodeCutoff;
 use Illuminate\Support\Carbon;
 use App\Models\RequestKehadiran;
+use App\Enums\StatusDataKehadiran;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,18 +24,18 @@ class RequestKehadiranController extends Controller
      */
     public function index(Request $request)
     {
-        $karyawan_id = $request->karyawan_id ?? null;
-        $bulan       = $request->bulan ?? null;
-        $tahun       = $request->tahun ?? null;
+        $user_id = $request->user_id ?? null;
+        $bulan   = $request->bulan ?? null;
+        $tahun   = $request->tahun ?? null;
 
         $request_kehadirans = RequestKehadiran::query();
 
         if (Auth::user()->hasRole('karyawan')) {
-            $request_kehadirans->where('karyawan_id', Auth::user()->karyawan->id);
+            $request_kehadirans->where('user_id', Auth::user()->id);
         }
 
-        if ($request->has('karyawan_id') && $request->karyawan_id != null) {
-            $request_kehadirans->where('karyawan_id', $karyawan_id);
+        if ($request->has('user_id') && $request->user_id != null) {
+            $request_kehadirans->where('user_id', $user_id);
         }
 
         if ($request->has('bulan') && $request->bulan != null) {
@@ -47,14 +51,14 @@ class RequestKehadiranController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $karyawans = Karyawan::where('is_active', 1)->get();
-        $bulans    = $this->list_month();
-        $tahuns    = $this->list_year();
+        $users  = User::get();
+        $bulans = $this->list_month();
+        $tahuns = $this->list_year();
 
         $data = [
             'request_kehadirans' => $request_kehadirans,
-            'karyawans'          => $karyawans,
-            'karyawan_id'        => $karyawan_id,
+            'users'              => $users,
+            'user_id'            => $user_id,
             'bulans'             => $bulans,
             'bulan'              => $bulan,
             'tahuns'             => $tahuns,
@@ -71,20 +75,20 @@ class RequestKehadiranController extends Controller
     {
         $periode_cutoffs = PeriodeCutoff::active()->latest()->get();
 
-        $karyawans = Karyawan::query();
+        $users = User::query();
 
         if (Auth::user()->hasRole('karyawan')) {
-            $karyawans->where('id', Auth::user()->karyawan->id);
+            $users->where('id', Auth::user()->id);
         }
 
-        $karyawans = $karyawans->get();
+        $users = $users->get();
 
-        $min_date = $periode_cutoffs->first()->kehadiran_start->format('d-m-Y');
-        $max_date = $periode_cutoffs->first()->kehadiran_end->format('d-m-Y');
+        $min_date = $periode_cutoffs->first()->start_date->format('d-m-Y');
+        $max_date = $periode_cutoffs->first()->end_date->format('d-m-Y');
 
         $data = [
             'periode_cutoffs' => $periode_cutoffs,
-            'karyawans'       => $karyawans,
+            'users'           => $users,
             'min_date'        => $min_date,
             'max_date'        => $max_date,
         ];
@@ -102,13 +106,13 @@ class RequestKehadiranController extends Controller
 
             if (Auth::user()->hasRole('karyawan')) {
                 $request->merge([
-                    'karyawan_id'       => Auth::user()->karyawan->id,
+                    'user_id'           => Auth::user()->id,
                     'periode_cutoff_id' => PeriodeCutoff::active()->first()->id
                 ]);
             }
 
             $request->validate([
-                'karyawan_id'       => ['required', 'exists:karyawans,id'],
+                'user_id'           => ['required', 'exists:users,id'],
                 'periode_cutoff_id' => ['required', 'exists:periode_cutoffs,id'],
                 'tanggal'           => ['required', 'date'],
                 'clock_in'          => ['required', 'date_format:H:i'],
@@ -123,47 +127,76 @@ class RequestKehadiranController extends Controller
             $clock_in    = Carbon::parse($clock_in_x);
             $clock_out   = Carbon::parse($clock_out_x);
 
-            // cek hari libur
-            $check_hari_libur = HariLibur::where('tanggal', $tanggal->toDateString())->count();
+            // cek work day
+            $current_d = Carbon::parse($clock_in_x);
 
-            if ($check_hari_libur > 0) {
-                throw new Exception(message: 'Tanggal yang dipilih adalah hari libur.');
+            $check_work_day = WorkDay::with('shift')->where('periode_cutoff_id', $request->periode_cutoff_id)
+                ->where('user_id', Auth::user()->id)
+                ->whereDate('tanggal', $current_d->toDateString())
+                ->first();
+
+            if (!$check_work_day) {
+                throw new Exception('Kamu tidak memiliki jadwal kerja pada tanggal ini.');
             }
 
-            $check_kehadiran = DataKehadiran::where(column: 'karyawan_id', operator: $request->karyawan_id)
-                ->where('tanggal', $tanggal->toDateString())
+            $work_day_id = $check_work_day->id;
+            $shift_id    = $check_work_day->shift_id;
+            $is_off_day  = $check_work_day->is_off_day;
+
+            if ($is_off_day == true) {
+                throw new Exception('Hari ini hari libur kamu...');
+            }
+
+            $check_kehadiran = DataKehadiran::where(column: 'user_id', operator: $request->user_id)
+                ->where('tanggal', $clock_in->toDateString())
                 ->first();
 
             if ($check_kehadiran) {
-                throw new Exception('Kamu sudah mengisi data kehadiran pada tanggal ini. Silahkan request admin untuk menghapus data lama kehadiranmu.');
+                throw new Exception('Kamu sudah mengisi data kehadiran pada tanggal ini. Silahkan request admin untuk menghapus data lama kehadiranmu jika ada perbaikan.');
             }
 
-            $check_request = RequestKehadiran::where(column: 'karyawan_id', operator: $request->karyawan_id)
-                ->where('tanggal', $tanggal->toDateString())
-                ->whereIn('is_approved', values: [null, true])
+            $check_request = RequestKehadiran::where(column: 'user_id', operator: $request->user_id)
+                ->whereDate('tanggal', $tanggal->toDateString())
+                ->where(function ($query) {
+                    $query->whereNull('is_approved')
+                        ->orWhere('is_approved', true);
+                })
                 ->first();
 
             if ($check_request) {
-                return redirect()->route('request-kehadiran.index')->withErrors('Kamu sudah melakukan request kehadiran pada tanggal ini.');
+                throw new Exception('Kamu sudah melakukan request kehadiran pada tanggal ini.');
             }
 
-            $jam_terlambat   = 0;
-            $menit_terlambat = 0;
-            $jam_masuk       = Carbon::parse($tanggal->toDateString() . ' ' . config('app.jam_masuk'));
+            $shift            = Shift::find($shift_id);
+            $shift_start_time = Carbon::parse($tanggal->toDateString() . ' ' . $shift->start_time);
 
-            if ($clock_in->gt($jam_masuk)) {
-                $jam_terlambat   = (int) ceil($jam_masuk->diffInHours(date: $clock_in));
-                $menit_terlambat = (int) ceil($jam_masuk->diffInMinutes($clock_in));
+            $toleransi_terlambat = config('app.toleransi_terlambat');
+            $jam_toleransi       = (clone $shift_start_time)->addMinutes($toleransi_terlambat);
+            $jam_terlambat       = 0;
+            $menit_terlambat     = 0;
+            $counter_terlambat   = 0;
+
+            if ($current_d->lt($jam_toleransi)) {;
+                $status            = StatusDataKehadiran::Present;
+            } elseif ($current_d->gt($jam_toleransi)) {
+                $jam_terlambat     = $shift_start_time->diffInHours($current_d);
+                $menit_terlambat   = $shift_start_time->diffInMinutes($current_d);
+                $counter_terlambat = ceil($menit_terlambat / 30);
+                $status            = StatusDataKehadiran::Late;
             }
 
             RequestKehadiran::createOrFirst([
-                'karyawan_id'       => $request->karyawan_id,
+                'user_id'           => $request->user_id,
+                'work_day_id'       => $work_day_id,
                 'periode_cutoff_id' => $request->periode_cutoff_id,
+                'shift_id'          => $shift_id,
                 'tanggal'           => $tanggal->toDateString(),
                 'clock_in'          => $clock_in->toDateTimeString(),
                 'clock_out'         => $clock_out->toDateTimeString(),
                 'jam_terlambat'     => $jam_terlambat,
                 'menit_terlambat'   => $menit_terlambat,
+                'counter_terlambat' => $counter_terlambat,
+                'status'            => $status,
                 'alasan'            => $request->alasan,
                 'is_approved'       => null,
                 'approved_by'       => null,
@@ -270,15 +303,19 @@ class RequestKehadiranController extends Controller
                 $message     = 'Request kehadiran berhasil diapprove.';
 
                 DataKehadiran::createOrFirst([
-                    'karyawan_id'       => $request_kehadiran->karyawan_id,
+                    'user_id'           => $request_kehadiran->user_id,
+                    'work_day_id'       => $request_kehadiran->work_day_id,
                     'periode_cutoff_id' => $request_kehadiran->periode_cutoff_id,
+                    'shift_id'          => $request_kehadiran->shift_id,
                     'tanggal'           => $request_kehadiran->tanggal->toDateString(),
                     'clock_in'          => $request_kehadiran->clock_in,
                     'clock_out'         => $request_kehadiran->clock_out,
                     'jam_terlambat'     => abs($request_kehadiran->jam_terlambat),
                     'menit_terlambat'   => abs($request_kehadiran->menit_terlambat),
+                    'counter_terlambat' => abs($request_kehadiran->counter_terlambat),
                     'foto_in'           => null,
                     'foto_out'          => null,
+                    'status'            => $request_kehadiran->status,
                 ]);
             }
 

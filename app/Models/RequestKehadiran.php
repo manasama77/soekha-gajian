@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property int $user_id
@@ -52,7 +52,7 @@ class RequestKehadiran extends Model
 {
     protected $fillable = [
         'user_id',
-        'work_id',
+        'work_day_id',
         'periode_cutoff_id',
         'shift_id',
         'tanggal',
@@ -60,6 +60,8 @@ class RequestKehadiran extends Model
         'clock_out',
         'jam_terlambat',
         'menit_terlambat',
+        'count_terlambat',
+        'status',
         'alasan',
         'is_approved',
         'approved_by',

@@ -66,7 +66,7 @@
                         class="dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 w-full p-6 bg-white border border-gray-200 rounded-lg shadow">
                         <a href="{{ route('setup.karyawan.edit', $karyawan) }}">
                             <h5 class="dark:text-white px-3 mb-2 text-2xl font-bold tracking-tight text-gray-900">
-                                {{ $karyawan->name }}
+                                {{ $karyawan->name }} {{ $karyawan->getRoleNames()->first() }}
                             </h5>
                             <h6 class="dark:text-white px-3 mb-2 text-xl font-bold tracking-tight text-gray-900">
                                 Departemen {{ $karyawan->departement->name }}

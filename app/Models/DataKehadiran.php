@@ -6,7 +6,7 @@ use App\Enums\StatusDataKehadiran;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property int $user_id
@@ -59,6 +59,7 @@ class DataKehadiran extends Model
         'clock_out',
         'jam_terlambat',
         'menit_terlambat',
+        'counter_terlambat',
         'foto_in',
         'foto_out',
         'status',
@@ -86,6 +87,6 @@ class DataKehadiran extends Model
 
     public function shifts()
     {
-        return $this->belongsTo(Shift::class);
+        return $this->belongsTo(Shift::class, 'shift_id');
     }
 }

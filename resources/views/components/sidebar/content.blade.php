@@ -21,7 +21,7 @@
         </x-sidebar.dropdown>
     @endif
 
-    <x-sidebar.link title="Kehadiran" href="{{ route('data-kehadiran.index') }}" :isActive="Str::startsWith(request()->route()->uri(), 'data-kehadiran')">
+    <x-sidebar.link title="Presensi" href="{{ route('data-kehadiran.index') }}" :isActive="Str::startsWith(request()->route()->uri(), 'data-kehadiran')">
         <x-slot name="icon">
             <i class="fa-solid fa-camera text-[1.3rem]" aria-hidden="true"></i>
         </x-slot>
