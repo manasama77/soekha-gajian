@@ -77,11 +77,11 @@
                                         class="dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 bg-white border-b">
                                         @if (auth()->user()->hasRole('admin'))
                                             <td class="px-6 py-4">
-                                                {{ $data_ijin->karyawan->name }}
+                                                {{ $data_ijin->user->name }}
                                             </td>
                                         @endif
                                         <td class="px-6 py-4">
-                                            {{ strtoupper($data_ijin->tipe_ijin) }}
+                                            {{ strtoupper($data_ijin->tipe_ijin->name) }}
                                         </td>
                                         <td class="px-6 py-4">
                                             {{ $data_ijin->from_date->format('d M Y') }}

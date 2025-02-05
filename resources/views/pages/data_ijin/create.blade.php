@@ -36,20 +36,19 @@
 
                     @if (auth()->user()->hasRole('admin'))
                         <div class="mb-4">
-                            <label for="karyawan_id"
-                                class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
+                            <label for="user_id" class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
                                 Karyawan
                             </label>
-                            <select id="karyawan_id" name="karyawan_id"
+                            <select id="user_id" name="user_id"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 required>
-                                @foreach ($karyawans as $karyawan)
-                                    <option @selected(old('karyawan_id') == $karyawan->id) value="{{ $karyawan->id }}">
-                                        {{ $karyawan->name }} - {{ $karyawan->sisa_cuti }} hari
+                                @foreach ($users as $user)
+                                    <option @selected(old('user_id') == $user->id) value="{{ $user->id }}">
+                                        {{ $user->name }} - {{ $user->sisa_cuti }} hari
                                     </option>
                                 @endforeach
                             </select>
-                            @error('karyawan_id')
+                            @error('user_id')
                                 <p class="text-xs italic text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
@@ -69,8 +68,8 @@
                         </select>
 
                         @if (auth()->user()->hasRole('karyawan'))
-                            <p class="dark:text-gray-300 mt-1 text-sm text-gray-500">
-                                Sisa Cuti: <span id="sisa_cuti">{{ auth()->user()->karyawan->sisa_cuti }}</span> hari
+                            <p id="v_sisa_cuti" class="dark:text-gray-300 mt-1 text-sm text-gray-500">
+                                Sisa Cuti: <span id="sisa_cuti">{{ auth()->user()->sisa_cuti }}</span> hari
                             </p>
                         @endif
 
@@ -131,11 +130,10 @@
                         </label>
 
                         <input type="file" name="lampiran" id="lampiran"
-                            class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('name') border-red-500 @enderror"
-                            required />
+                            class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('name') border-red-500 @enderror" />
 
                         <p id="helper-text-explanation" class="dark:text-gray-400 mt-2 text-xs text-gray-500">
-                            Khusus Cuti dan Sakit Dengan Surat Dokter, lampiran harus diisi.
+                            Khusus Sakit Dengan Surat Dokter, lampiran harus diisi.
                         </p>
 
                         @error('lampiran')
@@ -160,10 +158,13 @@
                 const tipe_ijin = $('#tipe_ijin').val();
                 $('#lampiran').attr('required', false);
                 $('#lampiran_required').text('');
+                $('#v_sisa_cuti').hide();
 
-                if (tipe_ijin === 'cuti' || tipe_ijin === 'sakit dengan surat dokter') {
+                if (tipe_ijin === 'sakit dengan surat dokter') {
                     $('#lampiran').attr('required', true);
                     $('#lampiran_required').text('*');
+                } else if (tipe_ijin === 'cuti') {
+                    $('#v_sisa_cuti').show();
                 }
             })
         </script>

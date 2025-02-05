@@ -131,6 +131,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur whereUserId($value)
  * @mixin \Eloquent
+ * @property int $counter_lembur
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur whereCounterLembur($value)
  */
 	class DataLembur extends \Eloquent {}
 }

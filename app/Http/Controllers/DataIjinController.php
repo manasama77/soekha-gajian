@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Models\User;
+use App\Models\WorkDay;
 use App\Models\DataIjin;
 use App\Models\Karyawan;
 use App\Models\HariLibur;
 use Illuminate\Http\Request;
 use App\Models\PeriodeCutoff;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +26,7 @@ class DataIjinController extends Controller
         $data_ijins = DataIjin::query();
 
         if (Auth::user()->hasRole('karyawan')) {
-            $data_ijins->where('karyawan_id', Auth::user()->karyawan->id);
+            $data_ijins->where('user_id', Auth::user()->id);
         }
 
         $data_ijins = $data_ijins->orderBy('from_date', 'desc')->paginate(10)->withQueryString();
@@ -40,23 +43,23 @@ class DataIjinController extends Controller
      */
     public function create()
     {
-        $karyawans = Karyawan::query();
+        $users = User::query();
 
         if (Auth::user()->hasRole('karyawan')) {
-            $karyawans->where('id', Auth::user()->karyawan->id);
+            $users->where('id', Auth::user()->id);
         }
 
-        $karyawans = $karyawans->get();
+        $users = $users->get();
 
         $periode_cutoff = PeriodeCutoff::active()->first();
 
-        $min_date = $periode_cutoff->kehadiran_start->toDateString();
-        $max_date = $periode_cutoff->kehadiran_end->toDateString();
+        $min_date = $periode_cutoff->start_date->toDateString();
+        $max_date = $periode_cutoff->end_date->toDateString();
 
         $data = [
-            'karyawans' => $karyawans,
-            'min_date'  => $min_date,
-            'max_date'  => $max_date,
+            'users'    => $users,
+            'min_date' => $min_date,
+            'max_date' => $max_date,
         ];
 
         return view('pages.data_ijin.create', $data);
@@ -72,48 +75,64 @@ class DataIjinController extends Controller
 
             if (Auth::user()->hasRole('karyawan')) {
                 $request->merge([
-                    'karyawan_id' => Auth::user()->karyawan->id,
+                    'user_id' => Auth::user()->id,
                 ]);
             }
 
             $request->validate([
-                'karyawan_id' => ['required'],
-                'tipe_ijin'   => ['required', 'in:cuti,sakit dengan surat dokter,ijin potong gaji'],
-                'from_date'   => ['required', 'date'],
-                'to_date'     => ['required', 'after_or_equal:from_date'],
-                'keterangan'  => ['required'],
-                'lampiran'    => ['required_if:tipe_ijin,cuti,sakit dengan surat dokter', 'file', 'mimes:pdf,jpg,jpeg,png'],
+                'user_id'    => ['required'],
+                'tipe_ijin'  => ['required', 'in:cuti,sakit dengan surat dokter,ijin potong gaji'],
+                'from_date'  => ['required', 'date'],
+                'to_date'    => ['required', 'after_or_equal:from_date'],
+                'keterangan' => ['required'],
+                'lampiran'   => ['required_if:tipe_ijin,sakit dengan surat dokter', 'file', 'mimes:pdf,jpg,jpeg,png'],
             ]);
 
-            $from = Carbon::parse($request->from_date);
-            $to   = Carbon::parse($request->to_date);
+            $from       = Carbon::parse($request->from_date);
+            $to         = Carbon::parse($request->to_date);
+            $periode    = CarbonPeriod::create($from, '1 day', $to);
+            $total_hari = $from->diffInDays($to) + 1;
 
-            $check_hari_libur_from = HariLibur::whereDate('tanggal', $from->toDateString())->first();
+            $check_work_day = WorkDay::with('shift')
+                ->where('user_id', $request->user_id)
+                ->where('tanggal', $from->toDateString())
+                ->first();
 
-            if ($check_hari_libur_from) {
-                throw new Exception('Tanggal ' . $from->format('d-m-Y') . ' adalah hari libur');
+            if (!$check_work_day) {
+                throw new Exception("Kamu tidak memiliki jadwal pada tanggal $from->toDateString()");
+            }
+
+            foreach ($periode as $day) {
+                $d = $day->toDateString();
+                $check_existing_data = DataIjin::where('user_id', $request->user_id)
+                    ->where('from_date', '<=', $d)
+                    ->where('to_date', '>=', $d)
+                    ->first();
+
+                if ($check_existing_data) {
+                    throw new Exception("Data ijin pada tanggal $d sudah ada");
+                }
             }
 
             $data_ijin              = new DataIjin();
-            $data_ijin->karyawan_id = $request->karyawan_id;
+            $data_ijin->user_id     = $request->user_id;
             $data_ijin->tipe_ijin   = $request->tipe_ijin;
             $data_ijin->from_date   = Carbon::parse($request->from_date)->format('Y-m-d');
             $data_ijin->to_date     = Carbon::parse($request->to_date)->format('Y-m-d');
             $data_ijin->keterangan  = $request->keterangan;
             $data_ijin->is_approved = null;
 
-            $total_hari = 1;
+            $total_hari_ijin = $total_hari;
 
             if ($from->notEqualTo($to)) {
                 while ($from->lt($to)) {
-                    if (!$from->isSunday()) {
-                        $total_hari++;
-                    }
+                    $check_work_day = WorkDay::with('shift')
+                        ->where('user_id', $request->user_id)
+                        ->where('tanggal', $from->toDateString())
+                        ->first();
 
-                    $cek_hari_libur = HariLibur::whereDate('tanggal', $from->toDateString())->first();
-
-                    if ($cek_hari_libur) {
-                        $total_hari--; // kurangi total hari jika ada hari libur
+                    if (!$check_work_day) {
+                        $total_hari_ijin--; // kurangi total hari jika tidak ada jadwal kerja
                     }
 
                     // cek hari libur
@@ -123,11 +142,11 @@ class DataIjinController extends Controller
 
             $data_ijin->total_hari = $total_hari;
 
-            $data_karyawan = Karyawan::findOrFail($request->karyawan_id)
-                ->where('id', $request->karyawan_id)
+            $data_user = User::findOrFail($request->user_id)
+                ->where('id', $request->user_id)
                 ->first();
 
-            if (in_array($request->tipe_ijin, ['cuti']) && $total_hari > $data_karyawan->sisa_cuti) {
+            if (in_array($request->tipe_ijin, ['cuti']) && $total_hari > $data_user->sisa_cuti) {
                 throw new Exception('Sisa cuti tidak mencukupi');
             }
 
@@ -208,23 +227,22 @@ class DataIjinController extends Controller
             ]);
 
             $data_ijin   = DataIjin::findOrFail($request->id);
-            $tipe_ijin   = $data_ijin->tipe_ijin;
+            $tipe_ijin   = $data_ijin->tipe_ijin->value;
             $total_hari  = $data_ijin->total_hari;
             $is_approved = false;
             $message     = 'Data ijin ditolak.';
 
             if ($request->tipe == "approve") {
-                $data_karyawan = Karyawan::findOrFail($data_ijin->karyawan_id);
+                $data_user = User::findOrFail($data_ijin->user_id);
 
-                if (in_array($tipe_ijin, ['cuti']) && $total_hari > $data_karyawan->sisa_cuti) {
+                if (in_array($tipe_ijin, ['cuti']) && $total_hari > $data_user->sisa_cuti) {
                     throw new Exception('Sisa cuti tidak mencukupi');
                 }
 
                 if (in_array($tipe_ijin, ['cuti'])) {
-                    $data_karyawan->sisa_cuti -= $total_hari;
-                    $data_karyawan->save();
+                    $data_user->sisa_cuti -= $total_hari;
+                    $data_user->save();
                 }
-
 
                 $is_approved = true;
                 $message     = 'Data ijin berhasil diapprove.';
