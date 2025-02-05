@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->date('join_date');
-            $table->enum('tipe_gaji', [TipeGaji::Bulanan->value, TipeGaji::Harian->value])->nullable();
+            $table->enum('tipe_gaji', [TipeGaji::Bulanan->value, TipeGaji::Harian->value, TipeGaji::Biweekly->value])->nullable();
             $table->integer('gaji_pokok')->default(0);
             $table->integer('gaji_harian')->default(0);
             $table->string(column: 'whatsapp');

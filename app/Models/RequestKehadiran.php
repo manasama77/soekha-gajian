@@ -60,7 +60,7 @@ class RequestKehadiran extends Model
         'clock_out',
         'jam_terlambat',
         'menit_terlambat',
-        'count_terlambat',
+        'counter_terlambat',
         'status',
         'alasan',
         'is_approved',

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property int $departement_id
@@ -100,7 +100,7 @@ class User extends Authenticatable
         'email',
         'password',
         'join_date',
-        'tipe_gaji', // bulanan / harian
+        'tipe_gaji', // bulanan / harian / biweekly
         'gaji_pokok',
         'gaji_harian',
         'whatsapp',
