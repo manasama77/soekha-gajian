@@ -72,7 +72,12 @@ class DashboardController extends Controller
             $sum_keterlambatan = $data_kehadiran->sum('counter_terlambat');
 
             if ($tipe_gaji == 'bulanan') {
-                $gaji_harian = ($gaji_bulanan / 2) / $total_hari_kerja;
+                if ($total_hari_kerja != 0) {
+                    $gaji_harian = ($gaji_bulanan / 2) / $total_hari_kerja;
+                } else {
+                    $gaji_harian = ($gaji_bulanan / 2) * 1;
+                }
+
                 $total_gaji += $gaji_harian * $total_hari_kerja;
             } else {
                 $total_gaji += $gaji_harian * $count_kehadiran;
