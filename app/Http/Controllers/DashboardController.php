@@ -39,8 +39,6 @@ class DashboardController extends Controller
         $periode_cutoff_id = $periode_cutoff->id;
         $start_date        = $periode_cutoff->start_date;
         $end_date          = Carbon::parse($periode_cutoff->end_date->toDateString() . ' 23:59:59');
-        $current_date      = Carbon::now();
-        $start_to_current  = ceil($start_date->diffInDays($current_date));
 
         $users = User::where('generate_slip_gaji', true);
         if (Auth::user()->hasRole('karyawan')) {
@@ -49,25 +47,15 @@ class DashboardController extends Controller
         $users = $users->get();
 
         foreach ($users as $user) {
-            $user_id           = $user->id;
-            $tipe_gaji         = $user->tipe_gaji;
-            $gaji_bulanan      = $user->gaji_pokok;
-            $gaji_harian       = $user->gaji_harian;
-            $plain_gaji_harian = 0;
+            $user_id      = $user->id;
+            $tipe_gaji    = $user->tipe_gaji;
+            $gaji_bulanan = $user->gaji_pokok;
+            $gaji_harian  = $user->gaji_harian;
 
             $total_hari_kerja = WorkDay::where('periode_cutoff_id', $periode_cutoff_id)
                 ->where('user_id', $user_id)
                 ->where('is_off_day', false)
                 ->count();
-
-            if ($tipe_gaji == 'bulanan') {
-                $gaji_harian       = ($gaji_bulanan / 2);
-                $plain_gaji_harian = $gaji_harian / $total_hari_kerja;
-            } else {
-                $gaji_harian       = $gaji_harian * $total_hari_kerja;
-                $plain_gaji_harian = $gaji_harian;
-            }
-            $total_gaji += $gaji_harian;
 
             $sum_lembur = DataLembur::approved()
                 ->where('user_id', $user_id)
@@ -83,20 +71,49 @@ class DashboardController extends Controller
             $count_kehadiran   = $data_kehadiran->count();
             $sum_keterlambatan = $data_kehadiran->sum('counter_terlambat');
 
-            $potongan_keterlambatan += $sum_keterlambatan * config('app.rate_terlambat');
+            if ($tipe_gaji == 'bulanan') {
+                $gaji_harian = ($gaji_bulanan / 2) / $total_hari_kerja;
+                $total_gaji += $gaji_harian * $total_hari_kerja;
+            } else {
+                $total_gaji += $gaji_harian * $count_kehadiran;
+            }
 
-            $hari_absen = $start_to_current - $count_kehadiran;
-            $potongan_absen += $hari_absen * $plain_gaji_harian;
+            $potongan_keterlambatan += $sum_keterlambatan * config('app.rate_terlambat');
 
             $total_ijin = DataIjin::with('user')->where('is_approved', true)
                 ->where('from_date', '>=', $start_date)
                 ->where('to_date', '<=', $end_date)
                 ->where('is_approved', true)
                 ->where('tipe_ijin', TipeIjin::Ijin->value)
-                ->where('user_id', $user->id)
-                ->sum('total_hari');
+                ->where('user_id', $user->id);
 
-            $potongan_ijin = $total_ijin * $plain_gaji_harian;
+            if ($tipe_gaji == 'bulanan') {
+                $potongan_ijin = $total_ijin->sum('total_hari') * $gaji_harian;
+            } elseif ($tipe_gaji == 'harian') {
+                $potongan_ijin = 0;
+            }
+
+            $total_sakit = DataIjin::with('user')->where('is_approved', true)
+                ->where('from_date', '>=', $start_date)
+                ->where('to_date', '<=', $end_date)
+                ->where('is_approved', true)
+                ->where('tipe_ijin', TipeIjin::Sakit->value)
+                ->where('user_id', $user->id);
+
+            $total_cuti = DataIjin::with('user')->where('is_approved', true)
+                ->where('from_date', '>=', $start_date)
+                ->where('to_date', '<=', $end_date)
+                ->where('is_approved', true)
+                ->where('tipe_ijin', TipeIjin::Cuti->value)
+                ->where('user_id', $user->id);
+
+            if ($tipe_gaji == 'bulanan') {
+                $hari_absen = $total_hari_kerja - $count_kehadiran - $total_ijin->sum('total_hari') - $total_sakit->sum('total_hari') - $total_cuti->sum('total_hari');
+                $potongan_absen += $hari_absen * $gaji_harian;
+            } elseif ($tipe_gaji == 'harian') {
+                $hari_absen      = 0;
+                $potongan_absen += 0;
+            }
         }
 
         $gaji_lembur = $menit_lembur * config('app.rate_lembur');

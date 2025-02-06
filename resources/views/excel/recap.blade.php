@@ -7,7 +7,6 @@
             <th>ABSENSI</th>
             <th>KETERLAMBATAN</th>
             <th>IJIN</th>
-            <th>KASBON</th>
             <th>TAKE HOME PAY</th>
         </tr>
     </thead>
@@ -20,14 +19,13 @@
                 <td>{{ $recap['absensi'] }}</td>
                 <td>{{ $recap['keterlambatan'] }}</td>
                 <td>{{ $recap['ijin'] }}</td>
-                <td>{{ $recap['kasbon'] }}</td>
                 <td>{{ $recap['take_home_pay'] }}</td>
             </tr>
         @endforeach
     </tbody>
     <tfoot>
         <tr>
-            <th colspan="7" align="right">Grand Total</th>
+            <th colspan="6" align="right">Grand Total</th>
             <th>{{ $gt }}</th>
         </tr>
     </tfoot>
