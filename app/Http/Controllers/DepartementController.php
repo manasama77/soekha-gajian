@@ -93,7 +93,7 @@ class DepartementController extends Controller
         try {
             DB::beginTransaction();
 
-            $get_karyawan = $departement->karyawans()->get();
+            $get_karyawan = $departement->user()->get();
 
             foreach ($get_karyawan as $karyawan) {
                 $karyawan->user()->delete();

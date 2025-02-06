@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property string $name
@@ -45,13 +45,8 @@ class Departement extends Model
         $this->attributes['name'] = strtoupper($value);
     }
 
-    public function karyawans()
+    public function user()
     {
-        return $this->hasMany(Karyawan::class);
-    }
-
-    public function karyawan_user()
-    {
-        return $this->hasOneThrough(User::class, Karyawan::class);
+        return $this->hasMany(User::class);
     }
 }

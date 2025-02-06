@@ -161,6 +161,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Departement withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Departement withoutTrashed()
  * @mixin \Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $user
+ * @property-read int|null $user_count
  */
 	class Departement extends \Eloquent {}
 }
