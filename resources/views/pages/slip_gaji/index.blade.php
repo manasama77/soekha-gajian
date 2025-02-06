@@ -77,16 +77,13 @@
                                         class="dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 bg-white border-b">
                                         @if (auth()->user()->hasRole('admin'))
                                             <td class="px-6 py-4">
-                                                {{ $slip_gaji->karyawan->name }}
+                                                {{ $slip_gaji->user->name }}
                                             </td>
                                         @endif
                                         <td class="px-6 py-4">
-                                            {{ $slip_gaji->periode_cutoff->kehadiran_start->format('d M Y') }} ~
-                                            {{ $slip_gaji->periode_cutoff->kehadiran_end->format('d M Y') }}
+                                            {{ $slip_gaji->periode_cutoff->start_date->format('d M Y') }} ~
+                                            {{ $slip_gaji->periode_cutoff->end_date->format('d M Y') }}
                                             (Kehadiran)
-                                            <br />
-                                            {{ $slip_gaji->periode_cutoff->lembur_start->format('d M Y') }} ~
-                                            {{ $slip_gaji->periode_cutoff->lembur_end->format('d M Y') }} (Lembur)
                                         </td>
                                         <td class="px-6 py-4">
                                             {{ $slip_gaji->total_hari_kerja }} Hari

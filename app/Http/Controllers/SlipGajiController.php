@@ -15,11 +15,11 @@ class SlipGajiController extends Controller
     {
         $slip_gajis = SlipGaji::with([
             'periode_cutoff',
-            'karyawan',
+            'user',
         ]);
 
         if (Auth::user()->hasRole('karyawan')) {
-            $slip_gajis->where('karyawan_id', Auth::user()->karyawan->id);
+            $slip_gajis->where('user_id', Auth::user()->id);
         }
 
         $slip_gajis = $slip_gajis->orderBy('id', 'desc')->paginate(10)->withQueryString();
