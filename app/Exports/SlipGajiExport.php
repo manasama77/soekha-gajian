@@ -25,12 +25,12 @@ class SlipGajiExport implements FromView
         $data = [];
 
         $slip_gajis = SlipGaji::with([
-            'karyawan'
+            'user'
         ])->where('periode_cutoff_id', $this->periode_cutoff_id)->get();
 
         $gt = 0;
         foreach ($slip_gajis as $slip_gaji) {
-            $nama_karyawan = $slip_gaji->karyawan->name;
+            $nama_karyawan = $slip_gaji->user->name;
             $gaji          = ($slip_gaji->tipe_gaji === 'harian') ? $slip_gaji->gaji_kehadiran : $slip_gaji->gaji_pokok;
             $lembur        = $slip_gaji->gaji_lembur;
             $absensi       = $slip_gaji->potongan_tidak_kerja;

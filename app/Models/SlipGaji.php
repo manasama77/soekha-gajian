@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property int $user_id
@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $jam_terlambat
  * @property int $menit_terlambat
  * @property string $potongan_terlambat
- * @property int $prorate
  * @property int $total_jam_lembur
  * @property int $total_menit_lembur
  * @property string $gaji_lembur
@@ -60,7 +59,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji wherePotonganIjin($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji wherePotonganTerlambat($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji wherePotonganTidakKerja($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereProrate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTakeHomePay($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTakeHomePayRounded($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTipeGaji($value)
@@ -80,7 +78,7 @@ class SlipGaji extends Model
     protected $fillable = [
         'user_id',
         'periode_cutoff_id',
-        'tipe_gaji', // harian / bulanan
+        'tipe_gaji', // harian / bulanan / biweekly
         'gaji_pokok',
         'gaji_harian',
         'total_hari_kerja',
@@ -93,10 +91,11 @@ class SlipGaji extends Model
         'potongan_ijin',
         'jam_terlambat',
         'menit_terlambat',
+        'counter_terlambat',
         'potongan_terlambat',
-        'prorate',
         'total_jam_lembur',
         'total_menit_lembur',
+        'counter_lembur',
         'gaji_lembur',
         'take_home_pay',
         'take_home_pay_rounded',

@@ -182,17 +182,19 @@ class WorkDayController extends Controller
             ]);
 
             foreach ($request->id as $key => $id) {
-                $work_day = WorkDay::find($id);
+                $work_day                    = WorkDay::find($id);
                 $work_day->periode_cutoff_id = $request->periode_cutoff_id;
                 $work_day->user_id           = $request->user_id;
                 $work_day->tanggal           = $request->tanggal[$key];
-                $work_day->shift_id          = $request->shift_id[$key];
+                $work_day->shift_id          = (int) $request->shift_id[$key];
+
                 if ($request->shift_id[$key] == 1) {
                     $work_day->is_off_day = 1;
                 } else {
                     $work_day->is_off_day = 0;
                 }
                 $work_day->save();
+                // DB::commit();
             }
 
             DB::commit();

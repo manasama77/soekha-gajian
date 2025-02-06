@@ -198,6 +198,10 @@
             font-weight: bold;
             text-align: right;
         }
+
+        .page-break {
+            page-break-after: always;
+        }
     </style>
 </head>
 
@@ -216,10 +220,9 @@
             <table class="table-info">
                 <tr>
                     <td class="left">
-                        <h1>Hybon Composite</h1>
+                        <h1>Soekha Coffee</h1>
                         <p>
-                            Jl. Rawa Beunteur No. 49 RT 002/002 Ciriung<br />Cibinong Kab. Bogor Jawa Barat Indonesia
-                            16918<br />Telp. 087802092214
+                            Jl. Raya Sukahati No.58, Sukahati<br />Kec. Cibinong, Kabupaten Bogor 16913
                         </p>
                     </td>
                     <td class="right">
@@ -228,26 +231,23 @@
                                 <td>Periode</td>
                                 <td>:</td>
                                 <td>
-                                    {{ $data->periode_cutoff->kehadiran_start->translatedFormat('d M y') }} -
-                                    {{ $data->periode_cutoff->kehadiran_end->translatedFormat('d M y') }} (Hari
-                                    Kerja)<br />
-                                    {{ $data->periode_cutoff->lembur_start->translatedFormat('d M y') }} -
-                                    {{ $data->periode_cutoff->lembur_end->translatedFormat('d M y') }} (Lembur)
+                                    {{ $data->periode_cutoff->start_date->translatedFormat('d M y') }} -
+                                    {{ $data->periode_cutoff->end_date->translatedFormat('d M y') }}
                                 </td>
                             </tr>
                             <tr>
                                 <td>Nama Karyawan</td>
                                 <td>:</td>
-                                <td>{{ $data->karyawan->name }}</td>
+                                <td>{{ $data->user->name }}</td>
                             </tr>
                             <tr>
                                 <td>Departemen</td>
                                 <td>:</td>
-                                <td>{{ $data->karyawan->departement->name }}</td>
+                                <td>{{ $data->user->departement->name }}</td>
                             </tr>
-                            @if ($data->karyawan->tipe_gaji == 'bulanan')
+                            @if ($data->user->tipe_gaji == 'bulanan')
                                 <tr>
-                                    <td>Gaji Pokok</td>
+                                    <td>Gaji Biweekly</td>
                                     <td>:</td>
                                     <td>Rp {{ number_format($data->gaji_pokok, 0, ',', '.') }}</td>
                                 </tr>
@@ -257,13 +257,13 @@
                                 <td>:</td>
                                 <td>
                                     Rp {{ number_format($data->gaji_harian, 2, ',', '.') }}<br />
-                                    @if ($data->karyawan->tipe_gaji == 'bulanan')
+                                    @if ($data->user->tipe_gaji == 'bulanan')
                                         <p class="small-info">
-                                            (Gaji Pokok / Hari Kerja)
+                                            (Gaji Biweekly / Hari Kerja)
                                         </p>
                                         <p class="small-info">
                                             Rp. {{ number_format($data->gaji_pokok, 0, ',', '.') }} /
-                                            {{ $data->periode_cutoff->hari_kerja }} Hari
+                                            {{ $hari_kerja }} Hari
                                         </p>
                                     @endif
                                 </td>
@@ -285,13 +285,13 @@
                                 <table>
                                     <tr>
                                         <th>Hari Kerja</th>
-                                        <td>{{ $data->periode_cutoff->hari_kerja }} Hari</td>
+                                        <td>{{ $hari_kerja }} Hari</td>
                                     </tr>
                                     <tr>
                                         <th>Total Presensi</th>
                                         <td>{{ $data->total_hari_kerja }} Hari</td>
                                     </tr>
-                                    @if ($data->karyawan->tipe_gaji == 'bulanan')
+                                    @if ($data->user->tipe_gaji == 'bulanan')
                                         <tr>
                                             <th>Total Absensi</th>
                                             <td>{{ $data->total_hari_tidak_kerja }} Hari</td>
@@ -310,12 +310,24 @@
                                         </tr>
                                     @endif
                                     <tr>
-                                        <th>Keterlambatan</th>
-                                        <td>{{ $data->menit_terlambat }} Menit</td>
+                                        <th style="vertical-align: top;">
+                                            Keterlambatan<br />
+                                            <small><em>per 30 menit</em></small>
+                                        </th>
+                                        <td>
+                                            {{ $data->counter_terlambat }}x<br />
+                                            <small><em>{{ $data->menit_terlambat }} menit</em></small>
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <th>Lembur</th>
-                                        <td>{{ $data->total_menit_lembur }} Menit</td>
+                                        <th style="vertical-align: top;">
+                                            Lembur<br />
+                                            <small><em>per 30 menit</em></small>
+                                        </th>
+                                        <td>
+                                            {{ $data->counter_lembur }}x<br />
+                                            <small><em>{{ $data->total_menit_lembur }} Menit</em></small>
+                                        </td>
                                     </tr>
                                 </table>
                             </td>
@@ -328,14 +340,14 @@
                                             <table>
                                                 <tr>
                                                     <th>
-                                                        @if ($data->karyawan->tipe_gaji == 'bulanan')
+                                                        @if ($data->user->tipe_gaji == 'bulanan')
                                                             Gaji Pokok
                                                         @else
                                                             Gaji
                                                         @endif
                                                     </th>
                                                     <td>
-                                                        @if ($data->karyawan->tipe_gaji == 'bulanan')
+                                                        @if ($data->user->tipe_gaji == 'bulanan')
                                                             Rp {{ number_format($data->gaji_pokok, 2, ',', '.') }}
                                                         @else
                                                             Rp {{ number_format($data->gaji_kehadiran, 2, ',', '.') }}
@@ -347,9 +359,8 @@
                                                         Lembur<br />
                                                         <p class="small-info">
                                                             Rp.
-                                                            {{ number_format(config('app.lembur_rate') / 60, 2, ',', '.') }}
-                                                            x
-                                                            {{ $data->total_menit_lembur }} Menit
+                                                            {{ number_format(config('app.rate_lembur'), 0, ',', '.') }}
+                                                            x {{ $data->counter_lembur }}
                                                         </p>
                                                     </th>
                                                     <td>Rp {{ number_format($data->gaji_lembur, 2, ',', '.') }}</td>
@@ -359,7 +370,7 @@
                                             <h6>Potongan</h6>
                                             <hr />
                                             <table>
-                                                @if ($data->karyawan->tipe_gaji == 'bulanan')
+                                                @if ($data->user->tipe_gaji == 'bulanan')
                                                     <tr>
                                                         <th>
                                                             Absensi<br />
@@ -379,16 +390,15 @@
                                                         Keterlambatan<br />
                                                         <p class="small-info">
                                                             Rp.
-                                                            {{ number_format(config('app.potongan_terlambat') / 60, 0, ',', '.') }}
-                                                            x
-                                                            {{ $data->menit_terlambat }} Menit
+                                                            {{ number_format(config('app.rate_terlambat'), 0, ',', '.') }}
+                                                            x {{ $data->counter_terlambat }}
                                                         </p>
                                                     </th>
                                                     <td>
                                                         Rp {{ number_format($data->potongan_terlambat, 2, ',', '.') }}
                                                     </td>
                                                 </tr>
-                                                @if ($data->karyawan->tipe_gaji == 'bulanan')
+                                                @if ($data->user->tipe_gaji == 'bulanan')
                                                     <tr>
                                                         <th>
                                                             Ijin<br />
@@ -402,13 +412,6 @@
                                                         </td>
                                                     </tr>
                                                 @endif
-                                                <tr>
-                                                    <th>
-                                                        Kasbon
-                                                    </th>
-                                                    <td>Rp {{ number_format($data->potongan_kasbon, 2, ',', '.') }}
-                                                    </td>
-                                                </tr>
                                             </table>
                                         </td>
                                     </tr>
@@ -429,6 +432,98 @@
             </div>
         </div>
     </div>
+
+    <div class="page-break"></div>
+
+    <div class="container">
+        <h1>Data Kehadiran</h1>
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr>
+                    <td style="text-align: center; font-weight: 700;">#</td>
+                    <td style="text-align: center; font-weight: 700;">Tanggal</td>
+                    <td style="text-align: center; font-weight: 700;">Status</td>
+                    <td style="text-align: center; font-weight: 700;">Shift</td>
+                    <td style="text-align: center; font-weight: 700;">Jam Masuk</td>
+                    <td style="text-align: center; font-weight: 700;">Jam Pulang</td>
+                    <td style="text-align: center; font-weight: 700;">Menit<br />Terlambat</td>
+                    <td style="text-align: center; font-weight: 700;">Terlambat<br />per 30 Menit</td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($arr_kehadiran as $ak)
+                    @php
+                        $color = '';
+                        if ($ak['status'] == 'late') {
+                            $color = 'background-color: orange;';
+                        } elseif ($ak['status'] == 'absent') {
+                            $color = 'background-color: red;';
+                        } elseif (in_array($ak['status'], ['cuti', 'sakit dengan surat dokter', 'ijin potong gaji'])) {
+                            $color = 'background-color: yellow;';
+                        } elseif (in_array($ak['status'], ['libur'])) {
+                            $color = 'background-color: grey;';
+                        } elseif (in_array($ak['status'], ['present'])) {
+                            $color = 'background-color: white;';
+                        } else {
+                            $color = 'background-color: green;';
+                        }
+                    @endphp
+                    <tr>
+                        <td style="text-align: center; {{ $color }}">{{ $loop->iteration }}</td>
+                        <td style="text-align: center; {{ $color }}">{{ $ak['tanggal'] }}</td>
+                        <td style="text-align: center; {{ $color }}">{{ ucfirst($ak['status']) }}</td>
+                        <td style="text-align: center; {{ $color }}">{{ $ak['shift'] }}</td>
+                        <td style="text-align: center; {{ $color }}">{{ $ak['jam_masuk'] }}</td>
+                        <td style="text-align: center; {{ $color }}">{{ $ak['jam_pulang'] }}</td>
+                        <td style="text-align: center; {{ $color }}">
+                            @if ($ak['menit_terlambat'])
+                                {{ $ak['menit_terlambat'] }}
+                            @endif
+                        </td>
+                        <td style="text-align: center; {{ $color }}">
+                            @if ($ak['menit_terlambat'])
+                                {{ $ak['counter_terlambat'] }}x
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    @if (count($arr_lembur) > 0)
+        <div class="page-break"></div>
+
+        <div class="container">
+            <h1>Data Lembur</h1>
+            <table border="1" cellpadding="5">
+                <thead>
+                    <tr>
+                        <td style="text-align: center; font-weight: 700;">#</td>
+                        <td style="text-align: center; font-weight: 700;">Tanggal</td>
+                        <td style="text-align: center; font-weight: 700;">Start</td>
+                        <td style="text-align: center; font-weight: 700;">End</td>
+                        <td style="text-align: center; font-weight: 700;">Menit<br />Lembur</td>
+                        <td style="text-align: center; font-weight: 700;">Lembur<br />per 30 Menit</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($arr_lembur as $ar)
+                        <tr>
+                            <td style="text-align: center;">{{ $loop->iteration }}</td>
+                            <td style="text-align: center;">{{ $ar['tanggal'] }}</td>
+                            <td style="text-align: center;">{{ $ar['jam_masuk'] }}</td>
+                            <td style="text-align: center;">{{ $ar['jam_pulang'] }}</td>
+                            <td style="text-align: center;">{{ $ar['menit_lembur'] }} menit</td>
+                            <td style="text-align: center;">{{ $ar['counter_lembur'] }}x</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
+
+        </div>
+    @endif
 </body>
 
 </html>

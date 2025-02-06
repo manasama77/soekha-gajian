@@ -318,7 +318,6 @@ namespace App\Models{
  * @property int $jam_terlambat
  * @property int $menit_terlambat
  * @property string $potongan_terlambat
- * @property int $prorate
  * @property int $total_jam_lembur
  * @property int $total_menit_lembur
  * @property string $gaji_lembur
@@ -354,7 +353,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji wherePotonganIjin($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji wherePotonganTerlambat($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji wherePotonganTidakKerja($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereProrate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTakeHomePay($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTakeHomePayRounded($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTipeGaji($value)
@@ -368,6 +366,12 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereUserId($value)
  * @mixin \Eloquent
+ * @property int $counter_terlambat
+ * @property int $rate_terlambat
+ * @property int $counter_lembur
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereCounterLembur($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereCounterTerlambat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereRateTerlambat($value)
  */
 	class SlipGaji extends \Eloquent {}
 }

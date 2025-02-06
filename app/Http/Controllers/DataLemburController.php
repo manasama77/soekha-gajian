@@ -78,7 +78,7 @@ class DataLemburController extends Controller
     public function create()
     {
         $periode_cutoffs = PeriodeCutoff::active()->latest()->get();
-        $users       = User::query();
+        $users       = User::where('generate_slip_gaji', true);
 
         if (Auth::user()->hasRole('karyawan')) {
             $users->where('id', Auth::user()->id);

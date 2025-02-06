@@ -43,7 +43,7 @@ class DataIjinController extends Controller
      */
     public function create()
     {
-        $users = User::query();
+        $users = User::where('generate_slip_gaji', true);
 
         if (Auth::user()->hasRole('karyawan')) {
             $users->where('id', Auth::user()->id);

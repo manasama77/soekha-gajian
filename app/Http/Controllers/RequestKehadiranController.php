@@ -75,7 +75,7 @@ class RequestKehadiranController extends Controller
     {
         $periode_cutoffs = PeriodeCutoff::active()->latest()->get();
 
-        $users = User::query();
+        $users = User::where('generate_slip_gaji', true);
 
         if (Auth::user()->hasRole('karyawan')) {
             $users->where('id', Auth::user()->id);
@@ -120,7 +120,6 @@ class RequestKehadiranController extends Controller
                 'alasan'            => ['required'],
             ]);
 
-
             $tanggal     = Carbon::createFromFormat('d-m-Y', $request->tanggal);
             $clock_in_x  = $tanggal->toDateString() . ' ' . $request->clock_in;
             $clock_out_x = $tanggal->toDateString() . ' ' . $request->clock_out;
@@ -131,7 +130,7 @@ class RequestKehadiranController extends Controller
             $current_d = Carbon::parse($clock_in_x);
 
             $check_work_day = WorkDay::with('shift')->where('periode_cutoff_id', $request->periode_cutoff_id)
-                ->where('user_id', Auth::user()->id)
+                ->where('user_id', $request->user_id)
                 ->whereDate('tanggal', $current_d->toDateString())
                 ->first();
 

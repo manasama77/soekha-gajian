@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusDataKehadiran;
 use Exception;
+use App\Models\User;
 use App\Models\DataIjin;
-use App\Models\Karyawan;
 use App\Models\SlipGaji;
-use App\Models\DataKasbon;
 use App\Models\DataLembur;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -14,6 +14,7 @@ use App\Models\DataKehadiran;
 use App\Models\PeriodeCutoff;
 use Illuminate\Support\Carbon;
 use App\Exports\SlipGajiExport;
+use App\Models\WorkDay;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -129,114 +130,177 @@ class PeriodeCutoffController extends Controller
                 throw new Exception('Periode cutoff tidak ditemukan atau tidak aktif!');
             }
 
-            $kehadiran_start = $periode_cutoffs->kehadiran_start;
-            $kehadiran_end   = $periode_cutoffs->kehadiran_end;
-            $lembur_start    = $periode_cutoffs->lembur_start;
-            $lembur_end      = $periode_cutoffs->lembur_end;
-            $hari_kerja      = $periode_cutoffs->hari_kerja;
+            $start_date = $periode_cutoffs->start_date;
+            $end_date   = $periode_cutoffs->end_date;
 
-            $karyawans = Karyawan::with('departement')
-                ->where('is_active', true)
+            $users = User::with('departement')
+                ->where('generate_slip_gaji', true)
                 ->get();
 
-            foreach ($karyawans as $karyawan) {
-                $karyawan_id = $karyawan->id;
-                $name        = $karyawan->name;
-                $departement = $karyawan->departement->name;
-                $tipe_gaji   = $karyawan->tipe_gaji;
-                $gaji_pokok  = (float) $karyawan->gaji_pokok;
-                $gaji_harian = $karyawan->gaji_harian;
+            foreach ($users as $user) {
+                $user_id       = $user->id;
+                $name          = $user->name;
+                $departement   = $user->departement->name;
+                $tipe_gaji     = $user->tipe_gaji;
+                $gaji_pokok    = (float) $user->gaji_pokok;
+                $gaji_biweekly = (float) $gaji_pokok / 2;
+                $gaji_harian   = $user->gaji_harian;
+                $arr_kehadiran = [];
+                $arr_lembur    = [];
+
+                $hari_kerjas = WorkDay::where('periode_cutoff_id', $periode_cutoff_id)
+                    ->where('user_id', $user_id)
+                    ->where('is_off_day', false);
 
                 if ($tipe_gaji === 'bulanan') {
-                    $gaji_harian = round($gaji_pokok / $hari_kerja, 2);
+                    $gaji_harian = round($gaji_biweekly / $hari_kerjas->count(), 2);
                 }
 
                 $total_cuti      = 0;
                 $total_sakit     = 0;
                 $total_hari_ijin = 0;
                 $potongan_ijin   = 0;
-                $potongan_kasbon = 0;
                 $gaji_kehadiran  = 0;
 
-                $data_kehadiran = DataKehadiran::where('karyawan_id', $karyawan_id)
+                $data_kehadiran = DataKehadiran::with('shifts')->where('user_id', $user_id)
                     ->where('periode_cutoff_id', $periode_cutoff_id)
-                    ->whereBetween('tanggal', [$kehadiran_start, $kehadiran_end])
-                    ->whereNotNull('clock_in')
-                    ->whereNotIn('tanggal', function ($query) {
-                        $query->select('tanggal')
-                            ->from('hari_liburs');
-                    });
+                    ->whereBetween('tanggal', [$start_date, $end_date])
+                    ->whereNotNull('clock_in');
 
-                $data_cuti = DataIjin::where('karyawan_id', $karyawan_id)
-                    ->where('from_date', '>=', $kehadiran_start)
-                    ->where('to_date', '<=', $kehadiran_end)
+                $data_cuti = DataIjin::where('user_id', $user_id)
+                    ->where('from_date', '>=', $start_date)
+                    ->where('to_date', '<=', $end_date)
                     ->where('is_approved', true)
                     ->where('tipe_ijin', 'cuti');
 
-                $data_sakit = DataIjin::where('karyawan_id', $karyawan_id)
-                    ->where('from_date', '>=', $kehadiran_start)
-                    ->where('to_date', '<=', $kehadiran_end)
+                $data_sakit = DataIjin::where('user_id', $user_id)
+                    ->where('from_date', '>=', $start_date)
+                    ->where('to_date', '<=', $end_date)
                     ->where('is_approved', true)
                     ->where('tipe_ijin', 'sakit dengan surat dokter');
 
-                $total_hari_kerja             = (int) $data_kehadiran->count();
-                $total_cuti                   = (int) $data_cuti->sum('total_hari');
-                $total_sakit                  = (int) $data_sakit->sum('total_hari');
-                $jam_terlambat                = (int) $data_kehadiran->sum('jam_terlambat');
-                $menit_terlambat              = (int) $data_kehadiran->sum('menit_terlambat');
-                $potongan_terlambat_per_menit = (float) config('app.potongan_terlambat') / 60;
-                $potongan_terlambat           = round($potongan_terlambat_per_menit * $menit_terlambat, 2);
+                // adam
+                $total_hari_kerja      = (int) $data_kehadiran->count();
+                $total_cuti            = (int) $data_cuti->sum('total_hari');
+                $total_sakit           = (int) $data_sakit->sum('total_hari');
+                $jam_terlambat         = (int) $data_kehadiran->sum('jam_terlambat');
+                $menit_terlambat       = (int) $data_kehadiran->sum('menit_terlambat');
+                $sum_counter_terlambat = (int) $data_kehadiran->sum('counter_terlambat');
+                $potongan_terlambat    = round(config('app.rate_terlambat') * $sum_counter_terlambat, 2);
 
-                $data_lemburs = DataLembur::where('karyawan_id', $karyawan_id)
-                    ->whereDate('overtime_in', '>=', $lembur_start)
-                    ->whereDate('overtime_in', '<=', $lembur_end)
-                    ->where('is_approved', true)
-                    ->get();
+                foreach ($hari_kerjas->get() as $hs) {
+                    $tanggal = Carbon::parse($hs->tanggal);
 
-                $total_jam_lembur   = 0;
-                $total_menit_lembur = 0;
-                foreach ($data_lemburs as $data_lembur) {
-                    $overtime_in  = Carbon::parse($data_lembur->overtime_in);
-                    $overtime_out = Carbon::parse($data_lembur->overtime_out);
-                    if ($overtime_in->gte($lembur_start) && $overtime_out->gte($lembur_end)) {
-                        $eod = Carbon::parse($overtime_in->toDateString() . ' 23:59:59');
-                        $total_jam_lembur   += ceil($overtime_in->diffInMinutes(date: $eod) / 60);
-                        $total_menit_lembur += ceil($overtime_in->diffInMinutes(date: $eod));
+                    $check_ijin = DataIjin::where('user_id', $user_id)
+                        ->where('from_date', '<=', $tanggal->toDateString())
+                        ->where('to_date', '>=', $tanggal->toDateString())
+                        ->where('is_approved', true)
+                        ->first();
+
+                    if ($check_ijin) {
+                        array_push($arr_kehadiran, [
+                            'tanggal'           => $tanggal->toDateString(),
+                            'shift'             => null,
+                            'jam_masuk'         => null,
+                            'jam_pulang'        => null,
+                            'menit_terlambat'   => null,
+                            'counter_terlambat' => null,
+                            'status'            => $check_ijin->tipe_ijin->value,
+                        ]);
+                        continue;
+                    }
+
+                    $check_kehadiran = DataKehadiran::with('shifts')->where('user_id', $user_id)
+                        ->where('periode_cutoff_id', $periode_cutoff_id)
+                        ->where('tanggal', $tanggal->toDateString())
+                        ->whereNotNull('clock_in')
+                        ->first();
+
+                    if (!$check_kehadiran) {
+                        array_push($arr_kehadiran, [
+                            'tanggal'           => $tanggal->toDateString(),
+                            'shift'             => null,
+                            'jam_masuk'         => null,
+                            'jam_pulang'        => null,
+                            'menit_terlambat'   => null,
+                            'counter_terlambat' => null,
+                            'status'            => StatusDataKehadiran::Absent->value,
+                        ]);
+                        continue;
+                    }
+
+                    if ($check_kehadiran->shift_id != 1) {
+                        array_push($arr_kehadiran, [
+                            'tanggal'           => $tanggal->toDateString(),
+                            'shift'             => $check_kehadiran->shifts->name,
+                            'jam_masuk'         => $check_kehadiran->clock_in,
+                            'jam_pulang'        => $check_kehadiran->clock_out,
+                            'menit_terlambat'   => $check_kehadiran->menit_terlambat,
+                            'counter_terlambat' => $check_kehadiran->counter_terlambat,
+                            'status'            => $check_kehadiran->status->value
+                        ]);
+                        continue;
                     } else {
-                        $total_jam_lembur   += ceil($overtime_in->diffInMinutes(date: $overtime_out) / 60);
-                        $total_menit_lembur += ceil($overtime_in->diffInMinutes(date: $overtime_out));
+                        array_push($arr_kehadiran, [
+                            'tanggal'           => $tanggal->toDateString(),
+                            'shift'             => $check_kehadiran->shifts->name,
+                            'jam_masuk'         => null,
+                            'jam_pulang'        => null,
+                            'menit_terlambat'   => null,
+                            'counter_terlambat' => null,
+                            'status'            => 'libur',
+                        ]);
+                        continue;
                     }
                 }
-                $gaji_lembur = round($total_menit_lembur * (config('app.lembur_rate') / 60), 2);
 
-                $data_ijin = DataIjin::where('karyawan_id', $karyawan_id)
-                    ->where('from_date', '>=', $kehadiran_start)
-                    ->where('to_date', '<=', $kehadiran_end)
+                $data_lemburs = DataLembur::where('user_id', $user_id)
+                    ->whereDate('overtime_in', '>=', $start_date)
+                    ->whereDate('overtime_in', '<=', $end_date)
+                    ->where('is_approved', true);
+
+                $total_jam_lembur   = $data_lemburs->sum('jam_lembur');
+                $total_menit_lembur = $data_lemburs->sum('menit_lembur');
+                $sum_counter_lembur = $data_lemburs->sum('counter_lembur');
+                $gaji_lembur        = round($sum_counter_lembur * config('app.rate_lembur'), 2);
+
+                foreach ($data_lemburs->get() as $dk) {
+                    array_push($arr_lembur, [
+                        'tanggal'        => $dk->overtime_in->toDateString(),
+                        'jam_masuk'      => $dk->overtime_in->toDateTimeString(),
+                        'jam_pulang'     => $dk->overtime_out->toDateTimeString(),
+                        'menit_lembur'   => $dk->menit_lembur,
+                        'counter_lembur' => $dk->counter_lembur,
+                    ]);
+                }
+
+                $data_ijin = DataIjin::where('user_id', $user_id)
+                    ->where('from_date', '>=', $start_date)
+                    ->where('to_date', '<=', $end_date)
                     ->where('is_approved', true)
                     ->where('tipe_ijin', 'ijin potong gaji');
 
                 $total_hari_ijin = (int) $data_ijin->sum('total_hari');
                 $potongan_ijin   = round($gaji_harian * $total_hari_ijin, 2);
 
-                $total_hari_tidak_kerja = $hari_kerja - $total_hari_kerja - $total_cuti - $total_sakit - $total_hari_ijin;
+                // dd(
+                //     [
+                //         'hari_kerja'       => $hari_kerjas->count(),
+                //         'total_hari_kerja' => $total_hari_kerja,
+                //         'total_cuti'       => $total_cuti,
+                //         'total_sakit'      => $total_sakit,
+                //         'total_hari_ijin'  => $total_hari_ijin,
+                //     ]
+                // );
+
+                $total_hari_tidak_kerja = $hari_kerjas->count() - $total_hari_kerja - $total_cuti - $total_sakit - $total_hari_ijin;
                 $potongan_tidak_kerja   = round($gaji_harian * $total_hari_tidak_kerja, 2);
 
-                $prorate = true;
+                $take_home_pay = round($gaji_biweekly + $gaji_lembur - $potongan_tidak_kerja - $potongan_terlambat - $potongan_ijin, 2);
 
-                if ($tipe_gaji === 'bulanan') {
-                    $prorate = ($hari_kerja != $total_hari_kerja) ? true : false;
-                }
-
-                $data_kasbon = DataKasbon::where('karyawan_id', $karyawan_id)
-                    ->whereBetween('tanggal', [$kehadiran_start->toDateString('Y-m-d'), $kehadiran_end->toDateString('Y-m-d')])
-                    ->sum('jumlah');
-
-                $potongan_kasbon = (float) $data_kasbon;
-
-                $take_home_pay = round($gaji_pokok + $gaji_lembur - $potongan_tidak_kerja - $potongan_terlambat - $potongan_ijin - $potongan_kasbon, 2);
+                $gaji_kehadiran = round($gaji_harian * $total_hari_kerja, 2);
                 if ($tipe_gaji === 'harian') {
-                    $gaji_kehadiran = round($gaji_harian * $total_hari_kerja, 2);
-                    $take_home_pay  = round($gaji_kehadiran + $gaji_lembur - $potongan_terlambat - $potongan_kasbon, 2);
+                    $take_home_pay  = round($gaji_kehadiran + $gaji_lembur - $potongan_terlambat, 2);
                 }
 
                 $take_home_pay_rounded = $take_home_pay;
@@ -249,16 +313,16 @@ class PeriodeCutoffController extends Controller
                     $take_home_pay_rounded = $thousands;
                 }
 
-                $nama_file = Str::slug($kehadiran_start->toDateString() . '-' . $kehadiran_end->toDateString() . '-' . $name . '-' . Carbon::now()->format('Y-m-d')) . ".pdf";
+                $nama_file = Str::slug($start_date->toDateString() . '-' . $end_date->toDateString() . '-' . $name . '-' . Carbon::now()->format('Y-m-d')) . ".pdf";
 
                 $data_slip_gaji = [
                     [
-                        'karyawan_id'       => $karyawan_id,
+                        'user_id'           => $user_id,
                         'periode_cutoff_id' => $periode_cutoff_id,
                     ],
                     [
                         'tipe_gaji'              => $tipe_gaji,
-                        'gaji_pokok'             => $gaji_pokok,
+                        'gaji_pokok'             => $gaji_biweekly,
                         'gaji_harian'            => $gaji_harian,
                         'total_hari_kerja'       => $total_hari_kerja,
                         'gaji_kehadiran'         => $gaji_kehadiran,
@@ -270,31 +334,36 @@ class PeriodeCutoffController extends Controller
                         'potongan_ijin'          => $potongan_ijin,
                         'jam_terlambat'          => $jam_terlambat,
                         'menit_terlambat'        => $menit_terlambat,
+                        'counter_terlambat'      => $sum_counter_terlambat,
                         'potongan_terlambat'     => $potongan_terlambat,
-                        'prorate'                => $prorate,
                         'total_jam_lembur'       => $total_jam_lembur,
                         'total_menit_lembur'     => $total_menit_lembur,
+                        'counter_lembur'         => $sum_counter_lembur,
                         'gaji_lembur'            => $gaji_lembur,
-                        'potongan_kasbon'        => $potongan_kasbon,
                         'take_home_pay'          => $take_home_pay,
                         'take_home_pay_rounded'  => $take_home_pay_rounded,
                         'file_pdf'               => $nama_file,
                     ]
                 ];
 
+                // dd($data_slip_gaji);
+
                 $slip_gaji    = SlipGaji::updateOrCreate($data_slip_gaji[0], $data_slip_gaji[1]);
                 $slip_gaji_id = $slip_gaji->id;
 
                 $slip = SlipGaji::with([
-                    'karyawan',
-                    'karyawan.departement',
+                    'user',
+                    'user.departement',
                     'periode_cutoff',
                 ])->find($slip_gaji_id);
 
-                $title = "Slip Gaji $name - $departement - " . $kehadiran_start->translatedFormat('d M y') . " s/d " . $kehadiran_end->translatedFormat('d M y');
+                $title = "Slip Gaji $name - $departement - " . $start_date->translatedFormat('d M y') . " s/d " . $end_date->translatedFormat('d M y');
                 $pdf  = Pdf::loadView('pdf.slip-gaji', [
-                    'title' => $title,
-                    'data'  => $slip,
+                    'title'         => $title,
+                    'data'          => $slip,
+                    'hari_kerja'    => $hari_kerjas->count(),
+                    'arr_kehadiran' => $arr_kehadiran,
+                    'arr_lembur'    => $arr_lembur,
                 ])->setPaper('a4', 'portrait');
                 // return $pdf->stream();
                 $pdf->save(public_path('storage/slip_gaji/' . $nama_file));
@@ -323,9 +392,9 @@ class PeriodeCutoffController extends Controller
             return redirect()->route('setup.periode-cutoff.index')->with('error', 'Periode Cutoff tidak ditemukan');
         }
 
-        $kehadiran_start = $periode_cutoff->kehadiran_start->format('d M Y');
-        $kehadiran_end   = $periode_cutoff->kehadiran_end->format('d M Y');
-        $file_name       = $kehadiran_start . ' - ' . $kehadiran_end . " Rekap Gaji Hybon";
+        $start_date = $periode_cutoff->start_date->format('d M Y');
+        $end_date   = $periode_cutoff->end_date->format('d M Y');
+        $file_name  = $start_date . ' - ' . $end_date . " Rekap Gaji Soekha Coffee";
         return Excel::download(new SlipGajiExport($periode_cutoff_id), $file_name . '.xlsx');
     }
 }

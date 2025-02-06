@@ -20,12 +20,13 @@ return new class extends Migration
             $table->foreignIdFor(PeriodeCutoff::class)->constrained()->cascadeOnDelete();
             $table->enum('tipe_gaji', [
                 TipeGaji::Bulanan->value,
+                TipeGaji::Biweekly->value,
                 TipeGaji::Harian->value,
             ]);
             $table->integer('gaji_pokok');
             $table->decimal('gaji_harian', 10, 2);
             $table->integer('total_hari_kerja');
-            $table->decimal('gaji_kehadiran', 10, 2); // gaji_pokok full / prorata
+            $table->decimal('gaji_kehadiran', 10, 2);
             $table->integer('total_cuti');
             $table->integer('total_sakit');
             $table->integer('total_hari_tidak_kerja');
@@ -34,10 +35,12 @@ return new class extends Migration
             $table->decimal('potongan_ijin', 10, 2);
             $table->integer('jam_terlambat')->default(0);
             $table->integer('menit_terlambat')->default(0);
+            $table->integer('counter_terlambat')->default(0);
             $table->decimal('potongan_terlambat', 10, 2);
-            $table->boolean('prorate');
+            $table->integer('rate_terlambat')->default(0);
             $table->integer('total_jam_lembur')->default(0);
             $table->integer('total_menit_lembur')->default(0);
+            $table->integer('counter_lembur')->default(0);
             $table->decimal('gaji_lembur', 15, 2);
             $table->decimal('take_home_pay', 10, 2);
             $table->integer(column: 'take_home_pay_rounded');
