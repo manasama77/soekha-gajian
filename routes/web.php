@@ -118,5 +118,11 @@ Route::middleware([
 Route::get('/test', [TestController::class, 'test']);
 Route::get('/test-keterlambatan', [TestController::class, 'repair_keterlambatan']);
 Route::get('/test-lembur', [TestController::class, 'repair_lembur']);
+Route::get('/sym', function () {
+    File::link(
+        storage_path('app/public'),
+        public_path('storage')
+    );
+});
 
 require __DIR__ . '/auth.php';
