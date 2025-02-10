@@ -28,7 +28,7 @@ class DashboardController extends Controller
 
         if (Auth::user()->hasRole('karyawan')) {
             if (!$periode_cutoff) {
-                return view('ga_ada_cutoff');
+                return view('dashboard_empty');
             }
         }
 
