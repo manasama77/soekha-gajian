@@ -3,16 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Enums\TipeGaji;
 use App\Enums\TipeIjin;
 use App\Models\WorkDay;
 use App\Models\DataIjin;
-use App\Models\Karyawan;
-use Carbon\CarbonPeriod;
-use App\Models\HariLibur;
-use App\Models\DataKasbon;
 use App\Models\DataLembur;
-use Illuminate\Http\Request;
 use App\Models\DataKehadiran;
 use App\Models\PeriodeCutoff;
 use Illuminate\Support\Carbon;
@@ -32,9 +26,16 @@ class DashboardController extends Controller
 
         $periode_cutoff = PeriodeCutoff::active()->first();
 
-        if (!$periode_cutoff) {
-            return view('ga_ada_cutoff');
+        if (Auth::user()->hasRole('karyawan')) {
+            if (!$periode_cutoff) {
+                return view('ga_ada_cutoff');
+            }
         }
+
+        if (!$periode_cutoff) {
+            return view('dashboard_empty');
+        }
+
 
         $periode_cutoff_id = $periode_cutoff->id;
         $start_date        = $periode_cutoff->start_date;
