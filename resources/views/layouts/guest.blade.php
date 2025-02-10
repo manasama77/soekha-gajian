@@ -67,9 +67,18 @@
 
 <body>
     <div x-data="mainState" class="font-sans antialiased" :class="{ dark: isDarkMode }" x-cloak>
-        <div class="dark:bg-dark-eval-0 dark:text-gray-200 flex flex-col min-h-screen text-gray-900 bg-gray-100">
+        <div
+            class="dark:bg-dark-eval-0 dark:text-gray-200 relative flex flex-col items-center justify-center w-full min-h-screen text-gray-900 bg-gray-100">
+
+            {{-- <div class="card">
+                <h1>test</h1>
+            </div> --}}
+
             {{ $slot }}
 
+        </div>
+
+        <div class="left-1/2 fixed bottom-0 -translate-x-1/2">
             <x-footer />
         </div>
 
@@ -82,6 +91,9 @@
             </x-button>
         </div>
     </div>
+
+    @stack('scripts')
+
 </body>
 
 </html>
