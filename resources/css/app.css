@@ -16,3 +16,62 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .dark input[type="time"]::-webkit-calendar-picker-indicator {
 	filter: invert(100%);
 }
+
+@keyframes handLeftPre {
+	0% {
+		opacity: 1;
+		right: 2rem;
+	}
+
+	99% {
+		opacity: 1;
+		right: -5rem;
+	}
+
+	100% {
+		opacity: 1;
+		right: 2rem;
+	}
+}
+
+@keyframes handLeft {
+	0% {
+		opacity: 1;
+		right: -6.8rem;
+	}
+	10% {
+		opacity: 1;
+		right: -5.9rem;
+	}
+	100% {
+		opacity: 1;
+		right: -6rem;
+	}
+}
+
+@keyframes handLeftOut {
+	0% {
+		opacity: 1;
+		right: -6rem;
+	}
+	50% {
+		opacity: 1;
+		right: -6rem;
+	}
+	100% {
+		opacity: 0;
+		right: -6rem;
+	}
+}
+
+.left_hand_pre_anim {
+	animation: handLeftPre 0.4s forwards;
+}
+
+.left_hand_anim {
+	animation: handLeft 1s ease-in-out 0.4s forwards;
+}
+
+/* .left_hand_anim_out {
+	animation: handLeftOut 1s forwards;
+} */
