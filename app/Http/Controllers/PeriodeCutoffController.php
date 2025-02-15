@@ -138,15 +138,16 @@ class PeriodeCutoffController extends Controller
                 ->get();
 
             foreach ($users as $user) {
-                $user_id       = $user->id;
-                $name          = $user->name;
-                $departement   = $user->departement->name;
-                $tipe_gaji     = $user->tipe_gaji;
-                $gaji_pokok    = (float) $user->gaji_pokok;
-                $gaji_biweekly = (float) $gaji_pokok / 2;
-                $gaji_harian   = $user->gaji_harian;
-                $arr_kehadiran = [];
-                $arr_lembur    = [];
+                $user_id               = $user->id;
+                $name                  = $user->name;
+                $departement           = $user->departement->name;
+                $tipe_gaji             = $user->tipe_gaji;
+                $gaji_pokok            = (float) $user->gaji_pokok;
+                $gaji_biweekly         = (float) $gaji_pokok / 2;
+                $gaji_harian           = $user->gaji_harian;
+                $gaji_perbantuan_shift = $user->gaji_perbantuan_shift;
+                $arr_kehadiran         = [];
+                $arr_lembur            = [];
 
                 $hari_kerjas = WorkDay::where('periode_cutoff_id', $periode_cutoff_id)
                     ->where('user_id', $user_id)
@@ -164,6 +165,18 @@ class PeriodeCutoffController extends Controller
 
                 $data_kehadiran = DataKehadiran::with('shifts')->where('user_id', $user_id)
                     ->where('periode_cutoff_id', $periode_cutoff_id)
+                    ->where('is_perbantuan_shift', 0)
+                    ->whereBetween('tanggal', [$start_date, $end_date])
+                    ->whereNotNull('clock_in');
+
+                $data_kehadiran_terlambat = DataKehadiran::with('shifts')->where('user_id', $user_id)
+                    ->where('periode_cutoff_id', $periode_cutoff_id)
+                    ->whereBetween('tanggal', [$start_date, $end_date])
+                    ->whereNotNull('clock_in');
+
+                $data_perbantuan_shift = DataKehadiran::with('shifts')->where('user_id', $user_id)
+                    ->where('periode_cutoff_id', $periode_cutoff_id)
+                    ->where('is_perbantuan_shift', 1)
                     ->whereBetween('tanggal', [$start_date, $end_date])
                     ->whereNotNull('clock_in');
 
@@ -180,13 +193,15 @@ class PeriodeCutoffController extends Controller
                     ->where('tipe_ijin', 'sakit dengan surat dokter');
 
                 // adam
-                $total_hari_kerja      = (int) $data_kehadiran->count();
-                $total_cuti            = (int) $data_cuti->sum('total_hari');
-                $total_sakit           = (int) $data_sakit->sum('total_hari');
-                $jam_terlambat         = (int) $data_kehadiran->sum('jam_terlambat');
-                $menit_terlambat       = (int) $data_kehadiran->sum('menit_terlambat');
-                $sum_counter_terlambat = (int) $data_kehadiran->sum('counter_terlambat');
-                $potongan_terlambat    = round(config('app.rate_terlambat') * $sum_counter_terlambat, 2);
+                $total_hari_kerja            = (int) $data_kehadiran->count();
+                $total_hari_perbantuan_shift = (int) $data_perbantuan_shift->count();
+                $total_gaji_perbantuan_shift = (int) $total_hari_perbantuan_shift * $gaji_perbantuan_shift;
+                $total_cuti                  = (int) $data_cuti->sum('total_hari');
+                $total_sakit                 = (int) $data_sakit->sum('total_hari');
+                $jam_terlambat               = (int) $data_kehadiran_terlambat->sum('jam_terlambat');
+                $menit_terlambat             = (int) $data_kehadiran_terlambat->sum('menit_terlambat');
+                $sum_counter_terlambat       = (int) $data_kehadiran_terlambat->sum('counter_terlambat');
+                $potongan_terlambat          = round(config('app.rate_terlambat') * $sum_counter_terlambat, 2);
 
                 foreach ($hari_kerjas->get() as $hs) {
                     $tanggal = Carbon::parse($hs->tanggal);
@@ -296,11 +311,11 @@ class PeriodeCutoffController extends Controller
                 $total_hari_tidak_kerja = $hari_kerjas->count() - $total_hari_kerja - $total_cuti - $total_sakit - $total_hari_ijin;
                 $potongan_tidak_kerja   = round($gaji_harian * $total_hari_tidak_kerja, 2);
 
-                $take_home_pay = round($gaji_biweekly + $gaji_lembur - $potongan_tidak_kerja - $potongan_terlambat - $potongan_ijin, 2);
+                $take_home_pay = round($gaji_biweekly + $gaji_lembur - $potongan_tidak_kerja - $potongan_terlambat - $potongan_ijin + $total_gaji_perbantuan_shift, 2);
 
                 $gaji_kehadiran = round($gaji_harian * $total_hari_kerja, 2);
                 if ($tipe_gaji === 'harian') {
-                    $take_home_pay  = round($gaji_kehadiran + $gaji_lembur - $potongan_terlambat, 2);
+                    $take_home_pay  = round($gaji_kehadiran + $gaji_lembur - $potongan_terlambat + $total_gaji_perbantuan_shift, 2);
                 }
 
                 $take_home_pay_rounded = $take_home_pay;
@@ -321,28 +336,31 @@ class PeriodeCutoffController extends Controller
                         'periode_cutoff_id' => $periode_cutoff_id,
                     ],
                     [
-                        'tipe_gaji'              => $tipe_gaji,
-                        'gaji_pokok'             => $gaji_biweekly,
-                        'gaji_harian'            => $gaji_harian,
-                        'total_hari_kerja'       => $total_hari_kerja,
-                        'gaji_kehadiran'         => $gaji_kehadiran,
-                        'total_cuti'             => $total_cuti,
-                        'total_sakit'            => $total_sakit,
-                        'total_hari_tidak_kerja' => $total_hari_tidak_kerja,
-                        'potongan_tidak_kerja'   => $potongan_tidak_kerja,
-                        'total_hari_ijin'        => $total_hari_ijin,
-                        'potongan_ijin'          => $potongan_ijin,
-                        'jam_terlambat'          => $jam_terlambat,
-                        'menit_terlambat'        => $menit_terlambat,
-                        'counter_terlambat'      => $sum_counter_terlambat,
-                        'potongan_terlambat'     => $potongan_terlambat,
-                        'total_jam_lembur'       => $total_jam_lembur,
-                        'total_menit_lembur'     => $total_menit_lembur,
-                        'counter_lembur'         => $sum_counter_lembur,
-                        'gaji_lembur'            => $gaji_lembur,
-                        'take_home_pay'          => $take_home_pay,
-                        'take_home_pay_rounded'  => $take_home_pay_rounded,
-                        'file_pdf'               => $nama_file,
+                        'tipe_gaji'                   => $tipe_gaji,
+                        'gaji_pokok'                  => $gaji_biweekly,
+                        'gaji_harian'                 => $gaji_harian,
+                        'gaji_perbantuan_shift'       => $gaji_perbantuan_shift,
+                        'total_hari_kerja'            => $total_hari_kerja,
+                        'gaji_kehadiran'              => $gaji_kehadiran,
+                        'total_hari_perbantuan_shift' => $total_hari_perbantuan_shift,
+                        'total_gaji_perbantuan_shift' => $total_gaji_perbantuan_shift,
+                        'total_cuti'                  => $total_cuti,
+                        'total_sakit'                 => $total_sakit,
+                        'total_hari_tidak_kerja'      => $total_hari_tidak_kerja,
+                        'potongan_tidak_kerja'        => $potongan_tidak_kerja,
+                        'total_hari_ijin'             => $total_hari_ijin,
+                        'potongan_ijin'               => $potongan_ijin,
+                        'jam_terlambat'               => $jam_terlambat,
+                        'menit_terlambat'             => $menit_terlambat,
+                        'counter_terlambat'           => $sum_counter_terlambat,
+                        'potongan_terlambat'          => $potongan_terlambat,
+                        'total_jam_lembur'            => $total_jam_lembur,
+                        'total_menit_lembur'          => $total_menit_lembur,
+                        'counter_lembur'              => $sum_counter_lembur,
+                        'gaji_lembur'                 => $gaji_lembur,
+                        'take_home_pay'               => $take_home_pay,
+                        'take_home_pay_rounded'       => $take_home_pay_rounded,
+                        'file_pdf'                    => $nama_file,
                     ]
                 ];
 

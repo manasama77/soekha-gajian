@@ -101,6 +101,19 @@
                     </div>
 
                     <div class="mb-4">
+                        <label for="gaji_perbantuan_shift"
+                            class="dark:text-white block mb-2 text-sm font-medium text-gray-900">Gaji Perbantuan
+                            Shift</label>
+                        <input type="number" name="gaji_perbantuan_shift" id="gaji_perbantuan_shift"
+                            placeholder="Masukkan Gaji Pokok"
+                            class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('gaji_perbantuan_shift') border-red-500 @enderror"
+                            value="{{ $user->gaji_perbantuan_shift }}" required />
+                        @error('gaji_perbantuan_shift')
+                            <p class="text-xs italic text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4">
                         <label for="join_date" class="dark:text-white block mb-2 text-sm font-medium text-gray-900">Join
                             Date</label>
                         <input type="date" name="join_date" id="join_date"
@@ -122,7 +135,8 @@
                         @enderror
                     </div>
                     <div class="mb-4">
-                        <label for="sisa_cuti" class="dark:text-white block mb-2 text-sm font-medium text-gray-900">Sisa
+                        <label for="sisa_cuti"
+                            class="dark:text-white block mb-2 text-sm font-medium text-gray-900">Sisa
                             Cuti</label>
                         <input type="number" name="sisa_cuti" id="sisa_cuti" placeholder="Masukkan Sisas Cuti"
                             class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('sisa_cuti') border-red-500 @enderror"

@@ -73,6 +73,21 @@
                             <p class="text-xs italic text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
+                    <div class="mb-4">
+                        <label for="is_perbantuan_shift"
+                            class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
+                            Perbantuan Shift?
+                        </label>
+                        <select id="is_perbantuan_shift" name="is_perbantuan_shift"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            required>
+                            <option @selected($shift->is_perbantuan_shift == 0) value="0">Tidak</option>
+                            <option @selected($shift->is_perbantuan_shift == 1) value="1">Ya</option>
+                        </select>
+                        @error('is_perbantuan_shift')
+                            <p class="text-xs italic text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
                     <div class="flex items-center justify-end">
                         <button type="submit"
                             class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">

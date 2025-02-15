@@ -39,15 +39,17 @@ class ShiftController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'       => ['required', 'string', 'max:255'],
-            'start_time' => ['required', 'date_format:H:i'],
-            'end_time'   => ['required', 'date_format:H:i', 'after:start_time'],
+            'name'                => ['required', 'string', 'max:255'],
+            'start_time'          => ['required', 'date_format:H:i'],
+            'end_time'            => ['required', 'date_format:H:i', 'after:start_time'],
+            'is_perbantuan_shift' => ['required'],
         ]);
 
         Shift::create([
-            'name'       => $request->name,
-            'start_time' => $request->start_time,
-            'end_time'   => $request->end_time,
+            'name'                => $request->name,
+            'start_time'          => $request->start_time,
+            'end_time'            => $request->end_time,
+            'is_perbantuan_shift' => $request->is_perbantuan_shift,
         ]);
 
         return redirect()->route('setup.shifts.index')->with('success', 'Shift created successfully !');
@@ -75,15 +77,17 @@ class ShiftController extends Controller
     public function update(Request $request, Shift $shift)
     {
         $request->validate([
-            'name'       => ['required', 'string', 'max:255'],
-            'start_time' => ['required', 'date_format:H:i'],
-            'end_time'   => ['required', 'date_format:H:i', 'after:start_time'],
+            'name'                => ['required', 'string', 'max:255'],
+            'start_time'          => ['required', 'date_format:H:i'],
+            'end_time'            => ['required', 'date_format:H:i', 'after:start_time'],
+            'is_perbantuan_shift' => ['required'],
         ]);
 
         $shift->update([
-            'name'       => $request->name,
-            'start_time' => $request->start_time,
-            'end_time'   => $request->end_time,
+            'name'                => $request->name,
+            'start_time'          => $request->start_time,
+            'end_time'            => $request->end_time,
+            'is_perbantuan_shift' => $request->is_perbantuan_shift,
         ]);
 
         return redirect()->route('setup.shifts.index')->with('success', 'Shift updated successfully !');

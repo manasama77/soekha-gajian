@@ -181,13 +181,9 @@
                 }).always(() => {
                     $.unblockUI();
                 }).fail(e => {
+                    let message = e.responseJSON.message;
                     // get header status code
                     if (e.status === 422) {
-                        let errors = e.responseJSON.errors;
-                        let message = '';
-                        $.each(errors, (i, val) => {
-                            message += `${val[0]}<br>`;
-                        });
                         Swal.fire({
                             title: 'Error!',
                             html: message,
@@ -196,7 +192,7 @@
                     } else {
                         Swal.fire({
                             title: 'Error!',
-                            text: e.message,
+                            text: message,
                             icon: 'error',
                         });
                     }

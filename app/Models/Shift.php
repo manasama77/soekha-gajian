@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property string $name
@@ -38,6 +38,7 @@ class Shift extends Model
         'name',
         'start_time',
         'end_time',
+        'is_perbantuan_shift',
     ];
 
     public function workDays()

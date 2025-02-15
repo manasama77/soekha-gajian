@@ -18,7 +18,8 @@
         <div class="max-w-7xl sm:px-6 lg:px-8 mx-auto">
 
             @if ($errors->any())
-                <div class="relative px-4 py-3 mt-4 text-red-700 bg-red-100 border border-red-400 rounded" role="alert">
+                <div class="relative px-4 py-3 mt-4 mb-4 text-red-700 bg-red-100 border border-red-400 rounded"
+                    role="alert">
                     <strong class="font-bold">Error!</strong>
                     <ul class="mt-3 text-sm text-red-600 list-disc list-inside">
                         @foreach ($errors->all() as $error)
@@ -138,6 +139,18 @@
                                     class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('gaji_harian') border-red-500 @enderror"
                                     value="{{ old('gaji_harian') ?? 0 }}" required />
                                 @error('gaji_harian')
+                                    <p class="text-xs italic text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="mb-4">
+                                <label for="gaji_perbantuan_shift"
+                                    class="dark:text-white block mb-2 text-sm font-medium text-gray-900">Gaji
+                                    Perbantuan Shift</label>
+                                <input type="number" name="gaji_perbantuan_shift" id="gaji_perbantuan_shift"
+                                    placeholder="Masukkan Gaji Harian"
+                                    class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('gaji_perbantuan_shift') border-red-500 @enderror"
+                                    value="{{ old('gaji_perbantuan_shift') ?? 0 }}" required />
+                                @error('gaji_perbantuan_shift')
                                     <p class="text-xs italic text-red-500">{{ $message }}</p>
                                 @enderror
                             </div>

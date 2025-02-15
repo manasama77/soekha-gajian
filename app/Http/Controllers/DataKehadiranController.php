@@ -155,9 +155,9 @@ class DataKehadiranController extends Controller
                 throw new Exception('Hari ini hari libur kamu...');
             }
 
-            $shift            = Shift::find($shift_id);
-            $shift_start_time = Carbon::parse($shift->start_time);
-            $shift_end_time   = Carbon::parse($shift->end_time);
+            $shift               = Shift::find($shift_id);
+            $shift_start_time    = Carbon::parse($shift->start_time);
+            $is_perbantuan_shift = $shift->is_perbantuan_shift;
 
             $check = DataKehadiran::where('user_id', $request->user_id)
                 ->where('tanggal', Carbon::now()->toDateString())
@@ -207,19 +207,20 @@ class DataKehadiranController extends Controller
                 }
 
                 DataKehadiran::createOrFirst([
-                    'user_id'           => $request->user_id,
-                    'work_day_id'       => $work_day_id,
-                    'periode_cutoff_id' => $request->periode_cutoff_id,
-                    'shift_id'          => $shift_id,
-                    'tanggal'           => $tanggal,
-                    'clock_in'          => $clock_in,
-                    'clock_out'         => null,
-                    'jam_terlambat'     => abs($jam_terlambat),
-                    'menit_terlambat'   => abs($menit_terlambat),
-                    'counter_terlambat' => $counter_terlambat,
-                    'foto_in'           => $path,
-                    'foto_out'          => null,
-                    'status'            => $status,
+                    'user_id'             => $request->user_id,
+                    'work_day_id'         => $work_day_id,
+                    'periode_cutoff_id'   => $request->periode_cutoff_id,
+                    'shift_id'            => $shift_id,
+                    'is_perbantuan_shift' => $is_perbantuan_shift,
+                    'tanggal'             => $tanggal,
+                    'clock_in'            => $clock_in,
+                    'clock_out'           => null,
+                    'jam_terlambat'       => abs($jam_terlambat),
+                    'menit_terlambat'     => abs($menit_terlambat),
+                    'counter_terlambat'   => $counter_terlambat,
+                    'foto_in'             => $path,
+                    'foto_out'            => null,
+                    'status'              => $status,
                 ]);
             } elseif ($request->tipe_kehadiran == 'out') {
                 $old_data = DataKehadiran::where('user_id', $request->user_id)

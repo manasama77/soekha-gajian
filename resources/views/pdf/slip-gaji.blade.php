@@ -154,12 +154,12 @@
         }
 
         .table-gaji table tr td:nth-child(1) {
-            width: 25%;
+            width: 30%;
             vertical-align: top;
         }
 
         .table-gaji table tr td:nth-child(2) {
-            width: 75%;
+            width: 70%;
             vertical-align: top;
         }
 
@@ -268,6 +268,11 @@
                                     @endif
                                 </td>
                             </tr>
+                            <tr>
+                                <td>Gaji Perbantuan Shift</td>
+                                <td>:</td>
+                                <td>Rp {{ number_format($data->gaji_perbantuan_shift, 2, ',', '.') }}</td>
+                            </tr>
                         </table>
                     </td>
                 </tr>
@@ -290,6 +295,10 @@
                                     <tr>
                                         <th>Total Presensi</th>
                                         <td>{{ $data->total_hari_kerja }} Hari</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="white-space: nowrap;">Perbantuan Shift</th>
+                                        <td>{{ $data->total_hari_perbantuan_shift }} Hari</td>
                                     </tr>
                                     @if ($data->user->tipe_gaji == 'bulanan')
                                         <tr>
@@ -364,6 +373,19 @@
                                                         </p>
                                                     </th>
                                                     <td>Rp {{ number_format($data->gaji_lembur, 2, ',', '.') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>
+                                                        Perbantuan Shift<br />
+                                                        <p class="small-info">
+                                                            Rp.
+                                                            {{ number_format($data->gaji_perbantuan_shift, 0, ',', '.') }}
+                                                            x {{ $data->total_hari_perbantuan_shift }}
+                                                        </p>
+                                                    </th>
+                                                    <td>Rp
+                                                        {{ number_format($data->total_gaji_perbantuan_shift, 2, ',', '.') }}
+                                                    </td>
                                                 </tr>
                                             </table>
 

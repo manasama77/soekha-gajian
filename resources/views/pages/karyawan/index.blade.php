@@ -107,6 +107,13 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td class="px-3 py-2">Gaji Perbantuan Shift</td>
+                                    <td class="px-3 py-2">:</td>
+                                    <td class="px-3 py-2">
+                                        {{ $karyawan->gaji_perbantuan_shift_idr }} per Hari
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td class="px-3 py-2">Cuti</td>
                                     <td class="px-3 py-2">:</td>
                                     <td class="px-3 py-2">

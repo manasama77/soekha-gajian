@@ -15,7 +15,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="md:max-w-3xl sm:px-6 lg:px-8 max-w-full mx-auto">
+        <div class="md:max-w-4xl sm:px-6 lg:px-8 max-w-full mx-auto">
             @if (session('status'))
                 <div class="relative px-4 py-3 mt-4 text-green-700 bg-green-100 border border-green-400 rounded"
                     role="alert">
@@ -40,7 +40,7 @@
                             <thead
                                 class="bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-xs text-gray-700 uppercase">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3">
+                                    <th scope="col" class="text-nowrap px-6 py-3">
                                         Nama Shift
                                     </th>
                                     <th scope="col" class="px-6 py-3">
@@ -48,6 +48,9 @@
                                     </th>
                                     <th scope="col" class="px-6 py-3">
                                         End
+                                    </th>
+                                    <th scope="col" class="text-nowrap px-6 py-3 text-center">
+                                        Perbantuan Shift
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-center">
                                         <i class="fas fa-cogs"></i>
@@ -77,12 +80,16 @@
                                             {{ $shift->end_time }}
                                         </td>
                                         <td class="px-6 py-4 text-center">
+                                            {!! $shift->is_perbantuan_shift
+                                                ? '<i class="fas fa-check text-green-500"></i>'
+                                                : '<i class="fas fa-times text-red-500"></i>' !!}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
                                             @if ($shift->id != 1)
                                                 <div class="flex flex-wrap justify-center gap-1">
                                                     <a href="{{ route('setup.shifts.edit', $shift) }}"
                                                         class="focus:outline-none text-white bg-yellow-500 hover:bg-yellow-600 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">
                                                         <i class="fa-solid fa-pencil me-2"></i>
-                                                        Edit
                                                     </a>
 
                                                     <form id="delete-form-{{ $shift->id }}"
@@ -95,7 +102,6 @@
                                                         onclick="askDelete('delete-form-{{ $shift->id }}')"
                                                         class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
                                                         <i class="fa-solid fa-trash me-2"></i>
-                                                        Delete
                                                     </button>
                                                 </div>
                                             @endif

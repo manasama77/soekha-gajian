@@ -81,8 +81,11 @@ class SlipGaji extends Model
         'tipe_gaji', // harian / bulanan / biweekly
         'gaji_pokok',
         'gaji_harian',
+        'gaji_perbantuan_shift',
         'total_hari_kerja',
         'gaji_kehadiran',
+        'total_hari_perbantuan_shift',
+        'total_gaji_perbantuan_shift',
         'total_cuti',
         'total_sakit',
         'total_hari_tidak_kerja',

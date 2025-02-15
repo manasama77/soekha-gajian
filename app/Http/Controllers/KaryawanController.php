@@ -10,6 +10,7 @@ use App\Models\Departement;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class KaryawanController extends Controller
 {
@@ -55,18 +56,27 @@ class KaryawanController extends Controller
             DB::beginTransaction();
 
             $request->validate([
-                'email'          => ['required', 'email', 'unique:users,email', 'max:255'],
-                'password'       => ['required', 'string', 'min:8', 'confirmed'],
-                'departement_id' => ['required', 'exists:departements,id'],
-                'name'           => ['required', 'string', 'max:255'],
-                'tipe_gaji'      => ['required', 'in:' . TipeGaji::Bulanan->value . ',' . TipeGaji::Harian->value],
-                'gaji_pokok'     => ['required', 'numeric'],
-                'gaji_harian'    => ['required', 'numeric'],
-                'join_date'      => ['required', 'date'],
-                'total_cuti'     => ['nullable', 'numeric'],
-                'sisa_cuti'      => ['nullable', 'numeric'],
-                'whatsapp'       => ['required', 'string', 'max:255'],
-                'is_admin'       => ['nullable', 'boolean'],
+                'email'                 => [
+                    'required',
+                    'email',
+                    Rule::unique('users', 'email')->whereNull('deleted_at'),
+                    'max:255'
+                ],
+                'password'              => ['required', 'string', 'min:8', 'confirmed'],
+                'departement_id'        => ['required', 'exists:departements,id'],
+                'name'                  => ['required', 'string', 'max:255'],
+                'tipe_gaji'             => ['required', 'in:' . TipeGaji::Bulanan->value . ',' . TipeGaji::Harian->value],
+                'gaji_pokok'            => ['required', 'numeric'],
+                'gaji_harian'           => [
+                    'required_if:tipe_gaji,' . TipeGaji::Harian->value,
+                    'numeric',
+                ],
+                'gaji_perbantuan_shift' => ['required', 'numeric'],
+                'join_date'             => ['required', 'date'],
+                'total_cuti'            => ['nullable', 'numeric'],
+                'sisa_cuti'             => ['nullable', 'numeric'],
+                'whatsapp'              => ['required', 'string', 'max:255'],
+                'is_admin'              => ['nullable', 'boolean'],
             ]);
 
             $gaji_pokok  = 0;
@@ -79,18 +89,19 @@ class KaryawanController extends Controller
             }
 
             $user = User::createOrFirst([
-                'departement_id'     => $request->departement_id,
-                'name'               => $request->name,
-                'email'              => $request->email,
-                'password'           => bcrypt($request->password),
-                'join_date'          => $request->join_date,
-                'tipe_gaji'          => $request->tipe_gaji,
-                'gaji_pokok'         => $gaji_pokok,
-                'gaji_harian'        => $gaji_harian,
-                'whatsapp'           => $request->whatsapp,
-                'total_cuti'         => $request->total_cuti ?? 0,
-                'sisa_cuti'          => $request->sisa_cuti ?? 0,
-                'generate_slip_gaji' => true,
+                'departement_id'        => $request->departement_id,
+                'name'                  => $request->name,
+                'email'                 => $request->email,
+                'password'              => bcrypt($request->password),
+                'join_date'             => $request->join_date,
+                'tipe_gaji'             => $request->tipe_gaji,
+                'gaji_pokok'            => $gaji_pokok,
+                'gaji_harian'           => $gaji_harian,
+                'gaji_perbantuan_shift' => $request->gaji_perbantuan_shift,
+                'whatsapp'              => $request->whatsapp,
+                'total_cuti'            => $request->total_cuti ?? 0,
+                'sisa_cuti'             => $request->sisa_cuti ?? 0,
+                'generate_slip_gaji'    => true,
             ]);
             if ($request->is_admin) {
                 $user->assignRole('admin');
@@ -100,9 +111,12 @@ class KaryawanController extends Controller
 
             DB::commit();
             return redirect()->route('setup.karyawan.index')->with('success', 'Karyawan created successfully !');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->getMessage())->withInput();
         } catch (Exception $e) {
             DB::rollBack();
-            return redirect()->route('setup.karyawan.index')->withError($e->getMessage())->withInput();
+            return redirect()->back()->withErrors($e->getMessage())->withInput();
         }
     }
 
@@ -129,17 +143,21 @@ class KaryawanController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'email'          => ['required', 'email:rfc,dns', 'max:255'],
-            'departement_id' => ['required', 'exists:departements,id'],
-            'name'           => ['required', 'string', 'max:255'],
-            'tipe_gaji'      => ['required', 'in:' . TipeGaji::Bulanan->value . ',' . TipeGaji::Harian->value],
-            'gaji_pokok'     => ['required', 'numeric'],
-            'gaji_harian'    => ['required', 'numeric'],
-            'join_date'      => ['required', 'date'],
-            'total_cuti'     => ['nullable', 'numeric'],
-            'sisa_cuti'      => ['nullable', 'numeric'],
-            'whatsapp'       => ['required', 'string', 'max:255'],
-            'is_admin'       => ['nullable', 'boolean'],
+            'email'                 => ['required', 'email:rfc,dns', 'max:255'],
+            'departement_id'        => ['required', 'exists:departements,id'],
+            'name'                  => ['required', 'string', 'max:255'],
+            'tipe_gaji'             => ['required', 'in:' . TipeGaji::Bulanan->value . ',' . TipeGaji::Harian->value],
+            'gaji_pokok'            => ['required', 'numeric'],
+            'gaji_harian'           => [
+                'required_if:tipe_gaji,' . TipeGaji::Harian->value,
+                'numeric'
+            ],
+            'gaji_perbantuan_shift' => ['required', 'numeric'],
+            'join_date'             => ['required', 'date'],
+            'total_cuti'            => ['nullable', 'numeric'],
+            'sisa_cuti'             => ['nullable', 'numeric'],
+            'whatsapp'              => ['required', 'string', 'max:255'],
+            'is_admin'              => ['nullable', 'boolean'],
         ]);
 
         $gaji_pokok  = 0;
@@ -158,15 +176,16 @@ class KaryawanController extends Controller
         }
 
         $user = $user->update([
-            'departement_id' => $request->departement_id,
-            'name'           => $request->name,
-            'tipe_gaji'      => $request->tipe_gaji,
-            'gaji_pokok'     => $gaji_pokok,
-            'gaji_harian'    => $gaji_harian,
-            'join_date'      => $request->join_date,
-            'total_cuti'     => $request->total_cuti ?? 0,
-            'sisa_cuti'      => $request->sisa_cuti ?? 0,
-            'whatsapp'       => $request->whatsapp,
+            'departement_id'        => $request->departement_id,
+            'name'                  => $request->name,
+            'tipe_gaji'             => $request->tipe_gaji,
+            'gaji_pokok'            => $gaji_pokok,
+            'gaji_harian'           => $gaji_harian,
+            'gaji_perbantuan_shift' => $request->gaji_perbantuan_shift,
+            'join_date'             => $request->join_date,
+            'total_cuti'            => $request->total_cuti ?? 0,
+            'sisa_cuti'             => $request->sisa_cuti ?? 0,
+            'whatsapp'              => $request->whatsapp,
         ]);
 
         return redirect()->route('setup.karyawan.index')->with('success', 'Karyawan updated successfully!');
@@ -175,11 +194,10 @@ class KaryawanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Karyawan $karyawan)
+    public function destroy(User $user)
     {
-        $karyawan->delete();
-        $karyawan->user->removeRole('karyawan');
-        $karyawan->user->delete();
+        $user->removeRole('karyawan');
+        $user->delete();
         return redirect()->route('setup.karyawan.index')->with('success', 'Karyawan deleted successfully !');
     }
 

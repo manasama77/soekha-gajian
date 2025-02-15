@@ -55,6 +55,7 @@ class RequestKehadiran extends Model
         'work_day_id',
         'periode_cutoff_id',
         'shift_id',
+        'is_perbantuan_shift',
         'tanggal',
         'clock_in',
         'clock_out',

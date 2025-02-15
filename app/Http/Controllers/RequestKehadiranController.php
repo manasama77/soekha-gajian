@@ -166,8 +166,9 @@ class RequestKehadiranController extends Controller
                 throw new Exception('Kamu sudah melakukan request kehadiran pada tanggal ini.');
             }
 
-            $shift            = Shift::find($shift_id);
-            $shift_start_time = Carbon::parse($tanggal->toDateString() . ' ' . $shift->start_time);
+            $shift               = Shift::find($shift_id);
+            $shift_start_time    = Carbon::parse($tanggal->toDateString() . ' ' . $shift->start_time);
+            $is_perbantuan_shift = $shift->is_perbantuan_shift;
 
             $toleransi_terlambat = config('app.toleransi_terlambat');
             $jam_toleransi       = (clone $shift_start_time)->addMinutes($toleransi_terlambat);
@@ -175,7 +176,7 @@ class RequestKehadiranController extends Controller
             $menit_terlambat     = 0;
             $counter_terlambat   = 0;
 
-            if ($current_d->lt($jam_toleransi)) {;
+            if ($current_d->lte($jam_toleransi)) {;
                 $status            = StatusDataKehadiran::Present;
             } elseif ($current_d->gt($jam_toleransi)) {
                 $jam_terlambat     = $shift_start_time->diffInHours($current_d);
@@ -185,21 +186,22 @@ class RequestKehadiranController extends Controller
             }
 
             RequestKehadiran::createOrFirst([
-                'user_id'           => $request->user_id,
-                'work_day_id'       => $work_day_id,
-                'periode_cutoff_id' => $request->periode_cutoff_id,
-                'shift_id'          => $shift_id,
-                'tanggal'           => $tanggal->toDateString(),
-                'clock_in'          => $clock_in->toDateTimeString(),
-                'clock_out'         => $clock_out->toDateTimeString(),
-                'jam_terlambat'     => $jam_terlambat,
-                'menit_terlambat'   => $menit_terlambat,
-                'counter_terlambat' => $counter_terlambat,
-                'status'            => $status,
-                'alasan'            => $request->alasan,
-                'is_approved'       => null,
-                'approved_by'       => null,
-                'approved_at'       => null,
+                'user_id'             => $request->user_id,
+                'work_day_id'         => $work_day_id,
+                'periode_cutoff_id'   => $request->periode_cutoff_id,
+                'shift_id'            => $shift_id,
+                'is_perbantuan_shift' => $is_perbantuan_shift,
+                'tanggal'             => $tanggal->toDateString(),
+                'clock_in'            => $clock_in->toDateTimeString(),
+                'clock_out'           => $clock_out->toDateTimeString(),
+                'jam_terlambat'       => $jam_terlambat,
+                'menit_terlambat'     => $menit_terlambat,
+                'counter_terlambat'   => $counter_terlambat,
+                'status'              => $status,
+                'alasan'              => $request->alasan,
+                'is_approved'         => null,
+                'approved_by'         => null,
+                'approved_at'         => null,
             ]);
 
             DB::commit();
@@ -302,19 +304,20 @@ class RequestKehadiranController extends Controller
                 $message     = 'Request kehadiran berhasil diapprove.';
 
                 DataKehadiran::createOrFirst([
-                    'user_id'           => $request_kehadiran->user_id,
-                    'work_day_id'       => $request_kehadiran->work_day_id,
-                    'periode_cutoff_id' => $request_kehadiran->periode_cutoff_id,
-                    'shift_id'          => $request_kehadiran->shift_id,
-                    'tanggal'           => $request_kehadiran->tanggal->toDateString(),
-                    'clock_in'          => $request_kehadiran->clock_in,
-                    'clock_out'         => $request_kehadiran->clock_out,
-                    'jam_terlambat'     => abs($request_kehadiran->jam_terlambat),
-                    'menit_terlambat'   => abs($request_kehadiran->menit_terlambat),
-                    'counter_terlambat' => abs($request_kehadiran->counter_terlambat),
-                    'foto_in'           => null,
-                    'foto_out'          => null,
-                    'status'            => $request_kehadiran->status,
+                    'user_id'             => $request_kehadiran->user_id,
+                    'work_day_id'         => $request_kehadiran->work_day_id,
+                    'periode_cutoff_id'   => $request_kehadiran->periode_cutoff_id,
+                    'shift_id'            => $request_kehadiran->shift_id,
+                    'is_perbantuan_shift' => $request_kehadiran->is_perbantuan_shift,
+                    'tanggal'             => $request_kehadiran->tanggal->toDateString(),
+                    'clock_in'            => $request_kehadiran->clock_in,
+                    'clock_out'           => $request_kehadiran->clock_out,
+                    'jam_terlambat'       => abs($request_kehadiran->jam_terlambat),
+                    'menit_terlambat'     => abs($request_kehadiran->menit_terlambat),
+                    'counter_terlambat'   => abs($request_kehadiran->counter_terlambat),
+                    'foto_in'             => null,
+                    'foto_out'            => null,
+                    'status'              => $request_kehadiran->status,
                 ]);
             }
 

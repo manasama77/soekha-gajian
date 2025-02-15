@@ -103,6 +103,7 @@ class User extends Authenticatable
         'tipe_gaji', // bulanan / harian / biweekly
         'gaji_pokok',
         'gaji_harian',
+        'gaji_perbantuan_shift',
         'whatsapp',
         'total_cuti',
         'sisa_cuti',
@@ -157,6 +158,11 @@ class User extends Authenticatable
     public function getGajiHarianIdrAttribute()
     {
         return 'Rp. ' . number_format($this->gaji_harian, 0, ',', '.');
+    }
+
+    public function getGajiPerbantuanShiftIdrAttribute()
+    {
+        return 'Rp. ' . number_format($this->gaji_perbantuan_shift, 0, ',', '.');
     }
 
     public function getWhatsappLinkAttribute()

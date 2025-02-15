@@ -74,7 +74,7 @@ class WorkDayController extends Controller
                     ->first();
 
                 if ($check) {
-                    throw new Exception('Shift sudah ada', 422);
+                    throw new Exception('Work Day a/n ' . $check->user->name . ' sudah ada', 422);
                 }
             }
 
@@ -84,8 +84,11 @@ class WorkDayController extends Controller
                 $work_day->user_id           = $request->user_id;
                 $work_day->tanggal           = $tanggal;
                 $work_day->shift_id          = $request->shift_id[$key];
-                if ($shift_id == 0) {
+
+                if ($request->shift_id[$key] == 1) {
                     $work_day->is_off_day = 1;
+                } else {
+                    $work_day->is_off_day = 0;
                 }
                 $work_day->save();
             }
@@ -99,14 +102,14 @@ class WorkDayController extends Controller
             DB::rollBack();
 
             return response()->json([
-                'message' => 'Validation Error',
-                'errors'  => $e->errors(),
+                'message' => 'Validation Error' . $e->getMessage(),
+                'errors'  => $e->getMessage(),
             ], 422);
         } catch (Exception $e) {
             DB::rollBack();
 
             return response()->json([
-                'message' => 'Error creating WorkDay',
+                'message' => $e->getMessage(),
                 'error'   => $e->getMessage(),
             ], $e->getCode());
         }

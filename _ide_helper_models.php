@@ -92,8 +92,10 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataKehadiran whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataKehadiran whereWorkDayId($value)
  * @mixin \Eloquent
+ * @property int $is_perbantuan_shift
  * @property int $counter_terlambat
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataKehadiran whereCounterTerlambat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataKehadiran whereIsPerbantuanShift($value)
  */
 	class DataKehadiran extends \Eloquent {}
 }
@@ -259,9 +261,11 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereWorkDayId($value)
  * @mixin \Eloquent
+ * @property int $is_perbantuan_shift
  * @property int $counter_terlambat
  * @property string $status
  * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereCounterTerlambat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereIsPerbantuanShift($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|RequestKehadiran whereStatus($value)
  */
 	class RequestKehadiran extends \Eloquent {}
@@ -295,6 +299,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereStartTime($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @property int $is_perbantuan_shift
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereIsPerbantuanShift($value)
  */
 	class Shift extends \Eloquent {}
 }
@@ -452,6 +458,9 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
  * @mixin \Eloquent
+ * @property int $gaji_perbantuan_shift
+ * @property-read mixed $gaji_perbantuan_shift_idr
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereGajiPerbantuanShift($value)
  */
 	class User extends \Eloquent {}
 }

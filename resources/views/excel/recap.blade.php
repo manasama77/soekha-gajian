@@ -2,8 +2,9 @@
     <thead>
         <tr>
             <th>NAMA</th>
-            <th>GAJI POKOK</th>
+            <th>GAJI KEHADIRAN</th>
             <th>LEMBUR</th>
+            <th>PERBANTUAN SHIFT</th>
             <th>ABSENSI</th>
             <th>KETERLAMBATAN</th>
             <th>IJIN</th>
@@ -16,6 +17,7 @@
                 <td>{{ $recap['nama_karyawan'] }}</td>
                 <td>{{ $recap['gaji'] }}</td>
                 <td>{{ $recap['lembur'] }}</td>
+                <td>{{ $recap['perbantuan_shift'] }}</td>
                 <td>{{ $recap['absensi'] }}</td>
                 <td>{{ $recap['keterlambatan'] }}</td>
                 <td>{{ $recap['ijin'] }}</td>
@@ -25,7 +27,7 @@
     </tbody>
     <tfoot>
         <tr>
-            <th colspan="6" align="right">Grand Total</th>
+            <th colspan="7" align="right">Grand Total</th>
             <th>{{ $gt }}</th>
         </tr>
     </tfoot>
