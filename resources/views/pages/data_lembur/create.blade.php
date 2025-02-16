@@ -100,7 +100,7 @@
                             </div>
                             <input type="time" id="overtime_in_time" name="overtime_in_time"
                                 class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                min="18:00" max="23:59" required />
+                                required />
                         </div>
 
                         @error('overtime_in_time')

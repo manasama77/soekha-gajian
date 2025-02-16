@@ -1,8 +1,8 @@
 {
-	"name": "Hybon APP",
-	"short_name": "Hybon",
-	"description": "Hybon APP",
-	"start_url": "https://hybon-gajian.sistegra.id",
+	"name": "Soekha Gajian App",
+	"short_name": "Soekha",
+	"description": "Soekha Gajian App",
+	"start_url": "https://soekha.solusikami.co.id/",
 	"display": "standalone",
 	"background_color": "#f0f0f0",
 	"theme_color": "#f0f0f0",
