@@ -40,8 +40,8 @@ class ShiftController extends Controller
     {
         $request->validate([
             'name'                => ['required', 'string', 'max:255'],
-            'start_time'          => ['required', 'date_format:H:i'],
-            'end_time'            => ['required', 'date_format:H:i', 'after:start_time'],
+            'start_time'          => ['required', 'date_format:H:i:s'],
+            'end_time'            => ['required', 'date_format:H:i:s', 'after:start_time'],
             'is_perbantuan_shift' => ['required'],
         ]);
 
@@ -78,8 +78,8 @@ class ShiftController extends Controller
     {
         $request->validate([
             'name'                => ['required', 'string', 'max:255'],
-            'start_time'          => ['required', 'date_format:H:i'],
-            'end_time'            => ['required', 'date_format:H:i', 'after:start_time'],
+            'start_time'          => ['required', 'date_format:H:i:s'],
+            'end_time'            => ['required', 'date_format:H:i:s', 'after:start_time'],
             'is_perbantuan_shift' => ['required'],
         ]);
 
