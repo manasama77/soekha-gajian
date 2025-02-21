@@ -84,6 +84,7 @@ Route::middleware([
     Route::post('/data-kehadiran', [DataKehadiranController::class, 'store'])->name('data-kehadiran.store');
     Route::get('/data-kehadiran/show', [DataKehadiranController::class, 'show'])->name('data-kehadiran.show');
     Route::delete('data-kehadiran/{data_kehadiran}', [DataKehadiranController::class, 'destroy'])->name('data-kehadiran.destroy');
+    Route::get('/data-kehadiran/excel', [DataKehadiranController::class, 'excel'])->name('data-kehadiran.excel');
 
     Route::get('/request-kehadiran', [RequestKehadiranController::class, 'index'])->name('request-kehadiran.index');
     Route::get('/request-kehadiran/create', [RequestKehadiranController::class, 'create'])->name('request-kehadiran.create');

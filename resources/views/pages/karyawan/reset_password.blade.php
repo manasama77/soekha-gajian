@@ -18,7 +18,7 @@
         <div class="max-w-7xl sm:px-6 lg:px-8 mx-auto">
             <div
                 class="dark:bg-gray-800 dark:border-gray-700 block max-w-sm p-6 mx-auto bg-white border border-gray-200 rounded-lg shadow">
-                <form action="{{ route('setup.karyawan.reset-password-process', $karyawan) }}" method="POST">
+                <form action="{{ route('setup.karyawan.reset-password-process', $user) }}" method="POST">
                     @csrf
                     @method('PATCH')
                     <div class="mb-4">
@@ -26,7 +26,7 @@
                             class="dark:text-white block mb-2 text-sm font-medium text-gray-900">Email</label>
                         <input type="email" name="email" id="email" placeholder="Masukkan Email untuk Login"
                             class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('email') border-red-500 @enderror"
-                            value="{{ $karyawan->user->email }}" readonly />
+                            value="{{ $user->email }}" readonly />
                         @error('email')
                             <p class="text-xs italic text-red-500">{{ $message }}</p>
                         @enderror

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\StatusDataKehadiran;
 use Exception;
 use Carbon\Carbon;
 use App\Models\User;
@@ -13,9 +12,12 @@ use App\Models\HariLibur;
 use Illuminate\Http\Request;
 use App\Models\DataKehadiran;
 use App\Models\PeriodeCutoff;
+use App\Enums\StatusDataKehadiran;
+use App\Exports\DataKehadiranExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\ImageManager;
+use Maatwebsite\Excel\Facades\Excel;
 use Intervention\Image\Drivers\Gd\Driver;
 
 class DataKehadiranController extends Controller
@@ -25,9 +27,8 @@ class DataKehadiranController extends Controller
      */
     public function index(Request $request)
     {
-        $user_id = $request->user_id ?? null;
-        $bulan   = $request->bulan ?? null;
-        $tahun   = $request->tahun ?? null;
+        $user_id           = $request->user_id ?? null;
+        $periode_cutoff_id = $request->periode_cutoff_id ?? null;
 
         $data_kehadirans = DataKehadiran::with('shifts');
 
@@ -39,12 +40,8 @@ class DataKehadiranController extends Controller
             $data_kehadirans->where('user_id', $user_id);
         }
 
-        if ($request->has('bulan') && $request->bulan != null) {
-            $data_kehadirans->whereMonth('tanggal', $bulan);
-        }
-
-        if ($request->has('tahun') && $request->tahun != null) {
-            $data_kehadirans->whereYear('tanggal', $tahun);
+        if ($request->has('periode_cutoff_id') && $request->periode_cutoff_id != null) {
+            $data_kehadirans->where('periode_cutoff_id', $periode_cutoff_id);
         }
 
         $data_kehadirans = $data_kehadirans->orderBy('tanggal', 'desc')
@@ -52,18 +49,15 @@ class DataKehadiranController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $users  = User::where('generate_slip_gaji', true)->get();
-        $bulans = $this->list_month();
-        $tahuns = $this->list_year();
+        $users  = User::where('generate_slip_gaji', true)->orderBy('name', 'asc')->get();
+        $periode_cutoffs = PeriodeCutoff::orderBy('is_active', 'desc')->get();
 
         $data = [
-            'data_kehadirans' => $data_kehadirans,
-            'users'           => $users,
-            'user_id'         => $user_id,
-            'bulans'          => $bulans,
-            'bulan'           => $bulan,
-            'tahuns'          => $tahuns,
-            'tahun'           => $tahun,
+            'data_kehadirans'   => $data_kehadirans,
+            'users'             => $users,
+            'user_id'           => $user_id,
+            'periode_cutoffs'   => $periode_cutoffs,
+            'periode_cutoff_id' => $periode_cutoff_id,
         ];
 
         return view('pages.data_kehadiran.index', $data);
@@ -80,7 +74,9 @@ class DataKehadiranController extends Controller
 
         $current_d = Carbon::now();
 
+
         $default_tipe_kehadiran = 'in';
+
         if (Auth::user()->hasRole('karyawan')) {
             $check_work_day = WorkDay::with('shift')->where('periode_cutoff_id', $periode_cutoff->id)
                 ->where('user_id', Auth::user()->id)
@@ -333,5 +329,26 @@ class DataKehadiranController extends Controller
         }
 
         return $year;
+    }
+
+    public function excel(Request $request)
+    {
+        $user_id           = $request->user_id == 'null' ? null : $request->user_id;
+        $periode_cutoff_id = $request->periode_cutoff_id == 'null' ? null : $request->periode_cutoff_id;
+
+        if ($periode_cutoff_id == null) {
+            return redirect()->route('data-kehadiran.index')->withErrors('Periode Cutoff tidak ditemukan');
+        }
+
+        $periode_cutoff = PeriodeCutoff::find($periode_cutoff_id);
+        if (!$periode_cutoff) {
+            return redirect()->route('data-kehadiran.index')->withErrors('Periode Cutoff tidak ditemukan');
+        }
+
+        $start_date = $periode_cutoff->start_date->format('d M Y');
+        $end_date   = $periode_cutoff->end_date->format('d M Y');
+        $file_name  = $start_date . ' - ' . $end_date . " Rekap Kehadiran Soekha Coffee";
+
+        return Excel::download(new DataKehadiranExport($user_id, $periode_cutoff_id), $file_name . '.xlsx');
     }
 }

@@ -204,22 +204,22 @@ class KaryawanController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function reset_password(Karyawan $karyawan)
+    public function reset_password(User $user)
     {
         $departements = Departement::all();
-        return view('pages.karyawan.reset_password', compact('karyawan', 'departements'));
+        return view('pages.karyawan.reset_password', compact('user', 'departements'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function reset_password_process(Request $request, Karyawan $karyawan)
+    public function reset_password_process(Request $request, User $user)
     {
         $request->validate([
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $karyawan->user->update([
+        $user->update([
             'password' => bcrypt($request->password),
         ]);
 

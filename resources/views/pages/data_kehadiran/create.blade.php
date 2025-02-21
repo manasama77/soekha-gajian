@@ -76,13 +76,8 @@
                         </div>
                     @endif
 
-                    @php
-                        $hidden = null;
-                        if (auth()->user()->hasRole('karyawan')) {
-                            $hidden = 'hidden';
-                        }
-                    @endphp
-                    <div class="mb-4 {{ $hidden }}">
+
+                    <div class="mb-4">
                         <label for="tipe_kehadiran"
                             class="dark:text-white block mb-2 text-sm font-medium text-gray-900">
                             Tipe Kehadiran
@@ -90,16 +85,8 @@
                         <select id="tipe_kehadiran" name="tipe_kehadiran"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             required>
-                            @if (auth()->user()->hasRole('karyawan'))
-                                @if ($default_tipe_kehadiran == 'in')
-                                    <option value="in">Clock In</option>
-                                @else
-                                    <option value="out">Clock Out</option>
-                                @endif
-                            @else
-                                <option value="in">Clock In</option>
-                                <option value="out">Clock Out</option>
-                            @endif
+                            <option value="in">Clock In</option>
+                            <option value="out">Clock Out</option>
                         </select>
                         @error('tipe_kehadiran')
                             <p class="text-xs italic text-red-500">{{ $message }}</p>

@@ -25,6 +25,8 @@ class WorkDayController extends Controller
             ->with(['user', 'periode_cutoff'])
             ->groupBy('user_id', 'periode_cutoff_id')
             ->orderBy('periode_cutoff_id', 'desc')
+            ->leftJoin('users', 'work_days.user_id', '=', 'users.id')
+            ->orderBy('users.name', 'asc')
             ->paginate(10);
 
         $data = [

@@ -39,7 +39,7 @@
             <div class="dark:bg-gray-800 sm:rounded-lg overflow-hidden bg-white shadow-sm">
                 <div class="dark:text-gray-100 p-6 text-gray-900">
 
-                    <div class="flex items-center justify-start max-w-full mb-4">
+                    <div class="flex items-center justify-between max-w-full mb-4">
                         <form action="{{ route('data-kehadiran.index') }}" method="GET" class="md:max-w-xl w-full">
                             <div class="flex flex-wrap gap-3">
                                 @if (auth()->user()->hasRole('admin'))
@@ -56,22 +56,12 @@
                                     </div>
                                 @endif
                                 <div>
-                                    <select id="bulan" name="bulan"
+                                    <select id="periode_cutoff_id" name="periode_cutoff_id"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        <option @selected($bulan == null) value="">Semua Bulan</option>
-                                        @foreach ($bulans as $b)
-                                            <option @selected($bulan == $b['month_id']) value="{{ $b['month_id'] }}">
-                                                {{ $b['month_name'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div>
-                                    <select id="tahun" name="tahun"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        @foreach ($tahuns as $b)
-                                            <option @selected($tahun == $b['year']) value="{{ $b['year'] }}">
-                                                {{ $b['year'] }}
+                                        @foreach ($periode_cutoffs as $periode_cutoff)
+                                            <option @selected($periode_cutoff_id == $periode_cutoff->id) value="{{ $periode_cutoff->id }}">
+                                                {{ $periode_cutoff->start_date->format('d M Y') }} -
+                                                {{ $periode_cutoff->end_date->format('d M Y') }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -84,6 +74,14 @@
                                 </div>
                             </div>
                         </form>
+                        @if (auth()->user()->hasRole('admin'))
+                            <div>
+                                <button type="button" onclick="exportExcel()"
+                                    class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-blue-800">
+                                    <i class="fa-solid fa-file-excel fa-fw"></i> Export Excel
+                                </button>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="sm:rounded-lg relative overflow-x-auto shadow-md">
@@ -227,6 +225,15 @@
                         document.getElementById(formId).submit();
                     }
                 });
+            }
+
+            function exportExcel() {
+                let user_id = document.getElementById('user_id').value == '' ? null : document.getElementById('user_id').value;
+                let periode_cutoff_id = document.getElementById('periode_cutoff_id').value == '' ? null : document
+                    .getElementById('periode_cutoff_id').value;
+
+                window.open("{{ route('data-kehadiran.excel') }}?user_id=" + user_id + "&periode_cutoff_id=" +
+                    periode_cutoff_id, '_blank');
             }
         </script>
     @endpush

@@ -58,3 +58,10 @@ Jika kamu merasa terbantu dengan aplikasi ini, jangan lupa traktir saya dengan b
     -   Penambahan flag perbantuan shift pada saat request kehadiran
     -   Penambahan data perbantuan shift pada saat generate slip gaji
     -   Penambahan data perbantuan shift pada saat export excel biaya pengeluaran gaji
+-   **Version 1.0.2**
+    -   **Setup > Karyawan**. Bug fix Reset Password Karyawan
+    -   **Presensi**. Penambahan fitur Export Excel Data Kehadiran (Admin)
+    -   **Presensi**. Perubahan jenis filter dari Bulan dan Tahun menjadi Periode Cutoff
+    -   **Presensi**. Perubahan dropdown filter mempengaruhi data ketika export excel
+    -   **Presensi**. Perbaikan ordering list karyawan menjadi **alphabetically ascending**
+    -   **Presensi**. Menambahkan pilihan tipe kehadiran **Clock In** dan **Clock Out** pada saat input data kehadiran
