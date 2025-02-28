@@ -18,116 +18,115 @@ class DashboardController extends Controller
     {
         $total_gaji             = 0;
         $menit_lembur           = 0;
+        $counter_lembur         = 0;
         $gaji_lembur            = 0;
+        $counter_absen          = 0;
         $potongan_absen         = 0;
+        $counter_keterlambatan  = 0;
         $potongan_keterlambatan = 0;
+        $counter_ijin           = 0;
         $potongan_ijin          = 0;
-        $proyeksi_pengeluaran   = 0;
+        $proyeksi               = 0;
 
         $periode_cutoff = PeriodeCutoff::active()->first();
 
-        if (Auth::user()->hasRole('karyawan')) {
+        if ((Auth::user()->hasRole('karyawan') && !$periode_cutoff) || !$periode_cutoff) {
             if (!$periode_cutoff) {
                 return view('dashboard_empty');
             }
         }
-
-        if (!$periode_cutoff) {
-            return view('dashboard_empty');
-        }
-
 
         $periode_cutoff_id = $periode_cutoff->id;
         $start_date        = $periode_cutoff->start_date;
         $end_date          = Carbon::parse($periode_cutoff->end_date->toDateString() . ' 23:59:59');
 
         $users = User::where('generate_slip_gaji', true);
+        // $users->where('id', 3);
+
         if (Auth::user()->hasRole('karyawan')) {
             $users->where('id', Auth::user()->id);
         }
         $users = $users->get();
 
         foreach ($users as $user) {
-            $user_id      = $user->id;
-            $tipe_gaji    = $user->tipe_gaji;
-            $gaji_bulanan = $user->gaji_pokok;
-            $gaji_harian  = $user->gaji_harian;
+            $user_id               = $user->id;
+            $tipe_gaji             = $user->tipe_gaji;
+            $gaji_bulanan          = $user->gaji_pokok;
+            $gaji_harian           = $user->gaji_harian;
+            $gaji_perbantuan_shift = $user->gaji_perbantuan_shift;
+            $gajinya               = ($tipe_gaji == 'harian') ? $gaji_harian : $gaji_bulanan;
 
+            // hitung hari kerja
             $total_hari_kerja = WorkDay::where('periode_cutoff_id', $periode_cutoff_id)
                 ->where('user_id', $user_id)
                 ->where('is_off_day', false)
                 ->count();
 
+            $total_hari_kerja = ($total_hari_kerja == 0) ? 1 : $total_hari_kerja;
+            $total_gaji += ($tipe_gaji == 'harian') ? $gajinya * $total_hari_kerja : $gajinya;
+            $gaji_bulananan_per_hari = ($tipe_gaji == 'bulanan') ? $gaji_bulanan / $total_hari_kerja : 0;
+
+            // hitung lembur
             $sum_lembur = DataLembur::approved()
                 ->where('user_id', $user_id)
                 ->whereDate('overtime_in', '>=', $start_date)
                 ->whereDate('overtime_in', '<=', $end_date)
                 ->sum('counter_lembur');
+            $menit_lembur   += $sum_lembur;
+            $counter_lembur += ($sum_lembur / 30);
+            $gaji_lembur    += $sum_lembur * config('app.rate_lembur');
 
-            $menit_lembur += $sum_lembur;
+            // hitung absen
+            $work_days = WorkDay::with('shift')->where('periode_cutoff_id', $periode_cutoff_id)
+                ->where('user_id', $user_id)
+                ->where('is_off_day', false)
+                ->get();
+            foreach ($work_days as $work_day) {
+                $work_day_id         = $work_day->id;
+                $tanggal             = $work_day->tanggal;
+                $is_perbantuan_shift = $work_day->shift->is_perbantuan_shift;
 
-            $data_kehadiran = DataKehadiran::where('user_id', $user_id)
-                ->where('periode_cutoff_id', $periode_cutoff_id);
+                $check_kehadiran = DataKehadiran::where('user_id', $user_id)
+                    ->where('work_day_id', $work_day_id)
+                    ->where('tanggal', $tanggal)
+                    ->first();
 
-            $count_kehadiran   = $data_kehadiran->count();
-            $sum_keterlambatan = $data_kehadiran->sum('counter_terlambat');
-
-            if ($tipe_gaji == 'bulanan') {
-                if ($total_hari_kerja != 0) {
-                    $gaji_harian = ($gaji_bulanan / 2) / $total_hari_kerja;
-                } else {
-                    $gaji_harian = ($gaji_bulanan / 2) * 1;
+                if ($check_kehadiran) {
+                    $counter_keterlambatan += $check_kehadiran->counter_terlambat;
                 }
 
-                $total_gaji += $gaji_harian * $total_hari_kerja;
-            } else {
-                $total_gaji += $gaji_harian * $count_kehadiran;
+                if (!$check_kehadiran) {
+                    $check_ijin = DataIjin::with('user')->where('is_approved', true)
+                        ->where('from_date', '>=', $start_date)
+                        ->where('to_date', '<=', $end_date)
+                        ->where('is_approved', true)
+                        ->where('tipe_ijin', TipeIjin::Ijin->value)
+                        ->where('user_id', $user_id)
+                        ->first();
+
+                    if ($check_ijin) {
+                        $counter_ijin++;
+                        $potongan_ijin += ($tipe_gaji == 'harian') ? $gaji_harian : $gaji_bulananan_per_hari;
+                    } else {
+                        $counter_absen++;
+                        $potongan_absen += ($is_perbantuan_shift) ? $gaji_perbantuan_shift : (($tipe_gaji == 'harian') ? $gaji_harian : $gaji_bulananan_per_hari);
+                    }
+                }
             }
 
-            $potongan_keterlambatan += $sum_keterlambatan * config('app.rate_terlambat');
-
-            $total_ijin = DataIjin::with('user')->where('is_approved', true)
-                ->where('from_date', '>=', $start_date)
-                ->where('to_date', '<=', $end_date)
-                ->where('is_approved', true)
-                ->where('tipe_ijin', TipeIjin::Ijin->value)
-                ->where('user_id', $user->id);
-
-            if ($tipe_gaji == 'bulanan') {
-                $potongan_ijin = $total_ijin->sum('total_hari') * $gaji_harian;
-            } elseif ($tipe_gaji == 'harian') {
-                $potongan_ijin = 0;
-            }
-
-            $total_sakit = DataIjin::with('user')->where('is_approved', true)
-                ->where('from_date', '>=', $start_date)
-                ->where('to_date', '<=', $end_date)
-                ->where('is_approved', true)
-                ->where('tipe_ijin', TipeIjin::Sakit->value)
-                ->where('user_id', $user->id);
-
-            $total_cuti = DataIjin::with('user')->where('is_approved', true)
-                ->where('from_date', '>=', $start_date)
-                ->where('to_date', '<=', $end_date)
-                ->where('is_approved', true)
-                ->where('tipe_ijin', TipeIjin::Cuti->value)
-                ->where('user_id', $user->id);
-
-            if ($tipe_gaji == 'bulanan') {
-                $hari_absen = $total_hari_kerja - $count_kehadiran - $total_ijin->sum('total_hari') - $total_sakit->sum('total_hari') - $total_cuti->sum('total_hari');
-                $potongan_absen += $hari_absen * $gaji_harian;
-            } elseif ($tipe_gaji == 'harian') {
-                $hari_absen      = 0;
-                $potongan_absen += 0;
-            }
+            // hitung keterlambatan
         }
 
-        $gaji_lembur = $menit_lembur * config('app.rate_lembur');
-        $lembur_show = number_format($gaji_lembur, 2, ',', '.');
-        $lembur_hide = preg_replace('/\d/', '*', $lembur_show);
+        $potongan_keterlambatan = $counter_keterlambatan * config('app.rate_terlambat');
+
+        // perhitungan proyeksi pengeluaran atau pendapatan
+        $proyeksi = $total_gaji + $gaji_lembur - $potongan_ijin - $potongan_absen - $potongan_keterlambatan;
 
         $total_gaji_show = number_format($total_gaji, 2, ',', '.');
         $total_gaji_hide = preg_replace('/\d/', '*', $total_gaji_show);
+
+        $lembur_show = number_format($gaji_lembur, 2, ',', '.');
+        $lembur_hide = preg_replace('/\d/', '*', $lembur_show);
 
         $potongan_absen_show = number_format($potongan_absen, 2, ',', '.');
         $potongan_absen_hide = preg_replace('/\d/', '*', $potongan_absen_show);
@@ -138,10 +137,8 @@ class DashboardController extends Controller
         $potongan_ijin_show = number_format($potongan_ijin, 2, ',', '.');
         $potongan_ijin_hide = preg_replace('/\d/', '*', $potongan_ijin_show);
 
-        $proyeksi_pengeluaran = $total_gaji + $gaji_lembur - $potongan_absen - $potongan_keterlambatan - $potongan_ijin;
-
-        $proyeksi_pengeluaran_show = number_format($proyeksi_pengeluaran, 2, ',', '.');
-        $proyeksi_pengeluaran_hide = preg_replace('/\d/', '*', $proyeksi_pengeluaran_show);
+        $proyeksi_show = number_format($proyeksi, 2, ',', '.');
+        $proyeksi_hide = preg_replace('/\d/', '*', $proyeksi_show);
 
         $data = [
             'lembur_show' => $lembur_show,
@@ -159,8 +156,8 @@ class DashboardController extends Controller
             'potongan_absen_show' => $potongan_absen_show,
             'potongan_absen_hide' => $potongan_absen_hide,
 
-            'proyeksi_pengeluaran_show' => $proyeksi_pengeluaran_show,
-            'proyeksi_pengeluaran_hide' => $proyeksi_pengeluaran_hide,
+            'proyeksi_show' => $proyeksi_show,
+            'proyeksi_hide' => $proyeksi_hide,
         ];
 
         return view('dashboard', $data);

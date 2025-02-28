@@ -374,12 +374,18 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereUserId($value)
  * @mixin \Eloquent
+ * @property int $total_hari_perbantuan_shift
+ * @property int $total_gaji_perbantuan_shift
+ * @property int $gaji_perbantuan_shift
  * @property int $counter_terlambat
  * @property int $rate_terlambat
  * @property int $counter_lembur
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereCounterLembur($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereCounterTerlambat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereGajiPerbantuanShift($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereRateTerlambat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTotalGajiPerbantuanShift($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SlipGaji whereTotalHariPerbantuanShift($value)
  */
 	class SlipGaji extends \Eloquent {}
 }

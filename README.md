@@ -65,3 +65,7 @@ Jika kamu merasa terbantu dengan aplikasi ini, jangan lupa traktir saya dengan b
     -   **Presensi**. Perubahan dropdown filter mempengaruhi data ketika export excel
     -   **Presensi**. Perbaikan ordering list karyawan menjadi **alphabetically ascending**
     -   **Presensi**. Menambahkan pilihan tipe kehadiran **Clock In** dan **Clock Out** pada saat input data kehadiran
+-   **Version 1.0.3**
+    -   **Dashboard**. Perbaikan penghitungan dashboard untuk persiapan versi 2.0.0
+-   **Version 1.0.4**
+    -   **Dashboard**. Perbaikan penghitungan keterlambatan dashboard untuk persiapan versi 2.0.0

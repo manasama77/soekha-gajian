@@ -129,8 +129,8 @@
                     <div class="flex justify-between gap-3">
                         <h5 class="dark:text-white mb-2 text-2xl font-bold tracking-tight text-gray-900">
                             <span x-show="showFull" id="proyeksi_pengeluaran"
-                                class="text-cyan-400">Rp.{{ $proyeksi_pengeluaran_show }}</span>
-                            <span x-show="!showFull" class="font-bold">Rp.{{ $proyeksi_pengeluaran_hide }}</span>
+                                class="text-cyan-400">Rp.{{ $proyeksi_show }}</span>
+                            <span x-show="!showFull" class="font-bold">Rp.{{ $proyeksi_hide }}</span>
                             <p class="dark:text-gray-400 mt-2 text-sm font-normal text-gray-700">
                                 @if (auth()->user()->hasRole('admin'))
                                     Proyeksi Pengeluaran<br />Biweekly Aktif
