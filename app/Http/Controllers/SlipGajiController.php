@@ -81,7 +81,7 @@ class SlipGajiController extends Controller
 
     public function download(SlipGaji $slipGaji)
     {
-        if (Auth::user()->hasRole('karyawan') && $slipGaji->karyawan_id != Auth::user()->karyawan->id) {
+        if (Auth::user()->hasRole('karyawan') && $slipGaji->user_id != Auth::user()->id) {
             return redirect()->route('slip-gaji.index')->withErrors('Anda tidak memiliki akses ke slip gaji ini');
         }
         return response()->download(public_path('storage/slip_gaji/' . $slipGaji->file_pdf));

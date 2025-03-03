@@ -69,3 +69,5 @@ Jika kamu merasa terbantu dengan aplikasi ini, jangan lupa traktir saya dengan b
     -   **Dashboard**. Perbaikan penghitungan dashboard untuk persiapan versi 2.0.0
 -   **Version 1.0.4**
     -   **Dashboard**. Perbaikan penghitungan keterlambatan dashboard untuk persiapan versi 2.0.0
+-   **Version 1.0.5**
+    -   **Slip Gaji**. Perbaikan permission untuk download, persiapan untuk versi 2.0.0
