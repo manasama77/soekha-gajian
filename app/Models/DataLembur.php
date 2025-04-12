@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- *
- *
  * @property int $id
  * @property int $user_id
  * @property \Illuminate\Support\Carbon $overtime_in
@@ -19,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur approved()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur newQuery()
@@ -35,6 +34,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur whereOvertimeOut($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DataLembur whereUserId($value)
+ *
  * @mixin \Eloquent
  */
 class DataLembur extends Model
@@ -52,19 +52,19 @@ class DataLembur extends Model
     ];
 
     protected $casts = [
-        'overtime_in'  => 'datetime',
+        'overtime_in' => 'datetime',
         'overtime_out' => 'datetime',
-        'approved_at'  => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function approved_by()
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(User::class, 'approved_by')->withTrashed();
     }
 
     public function scopeApproved($query)
